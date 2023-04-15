@@ -1,0 +1,22 @@
+[project]
+name = "scikit-gbm"
+version = "0.0.1"
+authors = [
+  { name="Krzysztof Joachimiak", email="joachimiak.krzysztof@gmail.com" },
+]
+description = "scikit-learn compatible tools to work with GBM models"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/krzjoa/scikit-gbm"
+"Bug Tracker" = "https://github.com/krzjoa/scikit-gbm/issues"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
