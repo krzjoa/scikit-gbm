@@ -9,16 +9,14 @@ pip install scikit-gbm
 # or 
 
 pip install git+https://github.com/krzjoa/scikit-gbm.git
-
 ```
 
 ## Usage
 
 For the moment, the only available class is `GBMFeaturezier`. It's a wrapper around
-scikit-learn GBMs, XGBoost, LightGBM and CatBoost models.
+scikit-learn GBMs, XGBoost, LightGBM and CatBoost models. 
 
 ```python
-
 
 # Classification
 from sklearn.datasets import make_classification
