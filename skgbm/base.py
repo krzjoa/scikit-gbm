@@ -6,6 +6,10 @@ Created on Sat Apr 15 16:40:06 2023
 @author: krzysztof
 """
 
+from typing import Final
+
+from sklearn.tree._tree import Tree
+
 import numpy as np
 try:
     import xgboost as xgb
@@ -17,10 +21,38 @@ except:
 # from lightgbm import LGBMRanker
 # from catboost import CatBoostRanker
 
+# read: https://arxiv.org/pdf/2101.07077.pdf
+
+name_map: Final = {
+    
+    # scikit-learn
+    'GradientBoostingClassifier' : 'sklearn',
+    'GradientBoostingRegressor'  : 'sklearn',
+    
+    # XGBoost
+    'XGBClassifier' : 'xgboost',
+    'XGBRegressor'  : 'xgboost',
+    'XGBRanker'     : 'xgboost', # ?
+    
+    # LightGBM
+    'LGBMClassifier' : 'lightgbm',
+    'LGBMRegressor'  : 'lightgbm',
+    'LGBMRanker'     : 'lightgbm',
+    
+    # CatBoost
+    'CatBoostClassifier' : 'catboost',
+    'CatBoostRegressor'  : 'catboost',
+    'CatBoostRanker'     : 'catboost'
+}
+
+def match_fun(obj, fun_map: dict):
+    return fun_map[name_map[type(obj).__name__]]
+
 # =============================================================================
 #                                   APPLY
 # =============================================================================
 
+# TODO: consider this https://stackoverflow.com/questions/12846054/calling-a-function-from-string-inside-the-same-module-in-python
 
 def sklearn_apply(obj, X):
     return np.squeeze(obj.apply(X))
@@ -36,35 +68,55 @@ def catboost_apply(obj, X):
 
 
 apply_fun = {
-    
-    # scikit-learn
-    'GradientBoostingClassifier' : sklearn_apply,
-    'GradientBoostingRegressor'  : sklearn_apply,
-    
-    # XGBoost
-    'XGBClassifier' : xgboost_apply,
-    'XGBRegressor'  : xgboost_apply,
-    'XGBRanker'     : xgboost_apply, # ?
-    
-    # LightGBM
-    'LGBMClassifier' : lightgbm_apply,
-    'LGBMRegressor'  : lightgbm_apply,
-    'LGBMRanker'     : lightgbm_apply,
-    
-    # CatBoost
-    'CatBoostClassifier' : catboost_apply,
-    'CatBoostRegressor'  : catboost_apply,
-    'CatBoostRanker'     : catboost_apply
-    
+    'sklearn': sklearn_apply,
+    'xgboost' : xgboost_apply,
+    'lightgbm' : lightgbm_apply,
+    'catboost' : catboost_apply,
 }
 
+# =============================================================================
+#                              GET TREES
+# =============================================================================
 
+def sklearn_get_trees(obj):
+    # TODO: use common representation for trees
+    return obj.estimators_
+
+def xgboost_get_trees(obj):
+    return obj.get_booster().get_dump()
+
+def lightgbm_get_trees(obj):
+    return obj.booster_.dump_model()
+
+def catboost_get_trees(obj):
+    n_trees = cab._object._get_tree_count()
+    tree_splits = [
+        cab._object._get_tree_splits(i, None) for i in range(n_trees)
+    ]
+    leaf_values = [
+        cab._get_tree_leaf_values(i) for i in range(n_trees)
+    ]
+
+    if not cab._object._is_oblivious():
+        step_nodes = [
+            cab._get_tree_step_nodes(i) for i in range(n_trees) 
+        ]
+        node_to_leaf = [
+            cab._get_tree_node_to_leaf(i) for i in range(n_trees) 
+        ] 
+    return 
+
+
+get_trees_fun = {
+    
+}
 
 class GBMWrapper:
     
     def __init__(self, estimator):
         self.estimator = estimator
-        self._apply = apply_fun[type(self.estimator).__name__]
+        self._apply = match_fun(self.estimator, apply_fun) 
+        self._get_trees = match_fun(self.estimator, get_trees_fun) 
         
     def fit(self, X, y, **kwargs):
         self.estimator.fit(X, y, **kwargs)
@@ -72,6 +124,9 @@ class GBMWrapper:
     
     def apply(self, X):
         return self._apply(self.estimator, X)
+    
+    def get_trees(self):
+        return self._get_trees()
 
 
 if __name__ == '__main__':
@@ -79,8 +134,20 @@ if __name__ == '__main__':
     
     from sklearn.ensemble import GradientBoostingClassifier
     from xgboost import XGBClassifier
+    from lightgbm import LGBMClassifier
+    from catboost import CatBoostClassifier
+    
+    from sklearn.tree import plot_tree  
     
     X, y = make_classification()
+    
+    
+    sklearn_gbm = GradientBoostingClassifier().fit(X, y)
+    xgb = XGBClassifier().fit(X, y)
+    cab = CatBoostClassifier().fit(X, y)
+    
+    dt = sklearn_gbm.estimators_[0]
+    
     
     gbm_wrapped = GBMWrapper(GradientBoostingClassifier())
     gbm_wrapped.fit(X, y)    
