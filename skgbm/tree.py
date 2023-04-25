@@ -13,7 +13,6 @@ class Tree:
     """A base class to store the information about a tree structure"""
     
     # TODO: consider moving it to Cython
-    # TODO: add index
     # TODO: add safe_int or maybe_int
     # TODO: to_df(), to_dict()
     # TODO: to_onnx() ? Compare:
@@ -21,7 +20,7 @@ class Tree:
     # https://catboost.ai/en/docs/concepts/apply-onnx-ml
     # TODO: TreeEnsemble => check_is_tree_based
     
-    def __init__(self, children_right, children_left, feature, threshold, value, missing=None):
+    def __init__(self, children_right, children_left, feature, threshold, value, missing=None, index=None):
         self.children_right = children_right
         self.children_left = children_left
         self.missing = missing
@@ -71,9 +70,19 @@ class Tree:
               feature        = feature,
               threshold      = threshold,
               value          = value, 
-              missing        = missing
+              missing        = missing,
+              index          = idx
         )
-        
+    
+    @classmethod
+    def from_lightgbm(cls, tree):
+        tree_struct = tree['tree_structure']
+    
+    
+    @classmethod
+    def from_catboost(cls, tree):
+        pass
+                
 
 
 
@@ -105,7 +114,8 @@ if __name__ == '__main__':
     xgb_tree_ = Tree.from_xgboost(xgb_tree)
     
     # LightGBM
-    lgb_tree = lgb.booster_.dump_model()
+    lgb_trees = lgb.booster_.dump_model()
+    lgb_tree = lgb_trees['tree_info']
     
     
     
