@@ -108,7 +108,10 @@ def catboost_get_trees(obj):
 
 
 get_trees_fun = {
-    
+    'sklearn': sklearn_get_trees,
+    'xgboost' : xgboost_get_trees,
+    'lightgbm' : lightgbm_get_trees,
+    'catboost' : catboost_get_trees,
 }
 
 class GBMWrapper:
