@@ -112,6 +112,7 @@ get_trees_fun = {
 }
 
 class GBMWrapper:
+    """A general wrapper object for all the acceptable models"""
     
     def __init__(self, estimator):
         self.estimator = estimator
