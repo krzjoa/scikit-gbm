@@ -74,6 +74,19 @@ apply_fun = {
     'catboost' : catboost_apply,
 }
 
+
+# =============================================================================
+#                             GET FEATURES
+# =============================================================================
+
+# gradinet boosting 
+#     feature_names_in_ : ndarray of shape (`n_features_in_`,)
+#        Names of features seen during :term:`fit`. Defined only when `X`
+#        has feature names that are all strings.
+
+
+
+
 # =============================================================================
 #                              GET TREES
 # =============================================================================
@@ -106,6 +119,7 @@ def catboost_get_trees(obj):
         ] 
     return 
 
+# trees_to_dataframe() LightGBM
 
 get_trees_fun = {
     'sklearn': sklearn_get_trees,

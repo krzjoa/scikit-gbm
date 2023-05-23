@@ -117,8 +117,9 @@ if __name__ == '__main__':
     lgb_trees = lgb.booster_.dump_model()
     lgb_tree = lgb_trees['tree_info']
     
-    
-    
     st = '0:[f17<0.216996461] yes=1,no=2,missing=1'
     prog = re.compile('.*\:\[f(\d+).*')
     prog.match(st)[0]
+    
+    # CatBoost
+    
