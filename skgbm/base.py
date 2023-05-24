@@ -16,6 +16,10 @@ try:
 except:
     pass
 
+from .trees_extraction import sklearn_get_trees, xgboost_get_trees, \
+    lightgbm_get_trees, catboost_get_trees
+
+
 # from sklearn.ensemble import GradientBoostingRegressor
 # from xgboost import XGBRanker
 # from lightgbm import LGBMRanker
@@ -85,41 +89,9 @@ apply_fun = {
 #        has feature names that are all strings.
 
 
-
-
 # =============================================================================
-#                              GET TREES
+#                             GET TREES
 # =============================================================================
-
-def sklearn_get_trees(obj):
-    # TODO: use common representation for trees
-    return obj.estimators_
-
-def xgboost_get_trees(obj):
-    return obj.get_booster().get_dump()
-
-def lightgbm_get_trees(obj):
-    return obj.booster_.dump_model()
-
-def catboost_get_trees(obj):
-    n_trees = cab._object._get_tree_count()
-    tree_splits = [
-        cab._object._get_tree_splits(i, None) for i in range(n_trees)
-    ]
-    leaf_values = [
-        cab._get_tree_leaf_values(i) for i in range(n_trees)
-    ]
-
-    if not cab._object._is_oblivious():
-        step_nodes = [
-            cab._get_tree_step_nodes(i) for i in range(n_trees) 
-        ]
-        node_to_leaf = [
-            cab._get_tree_node_to_leaf(i) for i in range(n_trees) 
-        ] 
-    return 
-
-# trees_to_dataframe() LightGBM
 
 get_trees_fun = {
     'sklearn': sklearn_get_trees,
@@ -127,6 +99,7 @@ get_trees_fun = {
     'lightgbm' : lightgbm_get_trees,
     'catboost' : catboost_get_trees,
 }
+
 
 class GBMWrapper:
     """A general wrapper object for all the acceptable models"""
@@ -143,7 +116,7 @@ class GBMWrapper:
     def apply(self, X):
         return self._apply(self.estimator, X)
     
-    def get_trees(self):
+    def get_trees(self, as_dataframe=True):
         return self._get_trees()
 
 

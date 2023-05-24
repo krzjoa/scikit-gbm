@@ -123,3 +123,61 @@ if __name__ == '__main__':
     
     # CatBoost
     
+    
+    
+    # Creating a data frame
+    
+    # ['tree_index',
+    #  'node_depth',
+    #  'node_index',
+    #  'left_child',
+    #  'right_child',
+    #  'parent_index',
+    #  'split_feature',
+    #  'split_gain',
+    #  'threshold',
+    #  'decision_type',
+    #  'missing_direction',
+    #  'missing_type',
+    #  'value',
+    #  'weight',
+    #  'count']
+    
+    import pandas as pd
+    
+    
+    sk_trees = sklearn_gbm.estimators_
+    
+    nodes = []
+    
+    for tree_index, tree in enumerate(sk_trees):
+        tree = tree[0].tree_
+        
+        print(tree_index)
+        
+        decision_type = '<='
+        
+        has_children = (tree.children_left != -1) & (tree.children_right != -1)
+        
+        # See: https://github.com/scikit-learn/scikit-learn/blob/f034f57b1ad7bc5a7a5dd342543cea30c85e74ff/sklearn/tree/_tree.pyx#L1087
+        df = pd.DataFrame({
+            'tree_index'        : [tree_index] * tree.node_count,
+            'node_depth'        : None,
+            'node_index'        : list(range(0, tree.node_count)),
+            'left_child'        : tree.children_left,
+            'right_child'       : tree.children_right,
+            'parent_index'      : None,
+            'split_feature'     : tree.feature,
+            'split_gain'        : None,
+            'threshold'         : tree.threshold,
+            'decision_type'     : [decision_type if hc else None for hc in has_children ],
+            'missing_direction' : None,
+            'missing_type'      : None,
+            'value'             : tree.value.ravel(),
+            'weight'            : None,
+            'count'             : None 
+        })
+
+    
+    
+    
