@@ -7,8 +7,8 @@ Created on Wed May 24 09:58:47 2023
 
 import pandas as pd
 import numpy as np
-
-
+import json
+import os
 
 # =============================================================================
 #                               SCIKIT-LEARN
@@ -46,39 +46,34 @@ def sklearn_compute_node_depths(obj):
 def sklearn_get_parent_idx(obj):
     return
 
-def sklearn_get_trees(obj, as_dataframe=True):
+def sklearn_get_trees(obj):
     trees =  obj.estimators_
     
-    if as_dataframe:
-        nodes = []
-        for tree_index, tree in enumerate(sk_trees):
-            tree = tree[0].tree_
-            decision_type = '<='
-            has_children = (tree.children_left != -1) & (tree.children_right != -1)
-            
-           
-            df = pd.DataFrame({
-                'tree_index'        : [tree_index] * tree.node_count,
-                'node_depth'        : sklearn_compute_node_depths(tree),
-                'node_index'        : list(range(0, tree.node_count)),
-                'left_child'        : tree.children_left,
-                'right_child'       : tree.children_right,
-                'parent_index'      : sklearn_get_parent_idx(tree),
-                'split_feature'     : tree.feature,
-                'split_gain'        : None,
-                'threshold'         : tree.threshold,
-                'decision_type'     : [decision_type if hc else None for hc in has_children ],
-                'missing_direction' : None,
-                'missing_type'      : None,
-                'value'             : tree.value.ravel(),
-                'weight'            : None,
-                'count'             : tree.n_node_samples 
-            })
-            nodes.append(df)
-        trees = pd.concat(nodes)
-    else:
-        # TODO: use common representation for trees
-        pass
+    nodes = []
+    for tree_index, tree in enumerate(trees):
+        tree = tree[0].tree_
+        decision_type = '<='
+        has_children = (tree.children_left != -1) & (tree.children_right != -1)
+        
+        df = pd.DataFrame({
+            'tree_index'        : [tree_index] * tree.node_count,
+            'node_depth'        : sklearn_compute_node_depths(tree),
+            'node_index'        : list(range(0, tree.node_count)),
+            'left_child'        : tree.children_left,
+            'right_child'       : tree.children_right,
+            'parent_index'      : None, #sklearn_get_parent_idx(tree),
+            'split_feature'     : tree.feature,
+            'split_gain'        : None,
+            'threshold'         : tree.threshold,
+            'decision_type'     : [decision_type if hc else None for hc in has_children],
+            'missing_direction' : None,
+            'missing_type'      : None,
+            'value'             : tree.value.ravel(),
+            'weight'            : None,
+            'count'             : tree.n_node_samples 
+        })
+        nodes.append(df)
+    trees = pd.concat(nodes)
 
     return trees
 
@@ -87,136 +82,131 @@ def sklearn_get_trees(obj, as_dataframe=True):
 # =============================================================================
 
 def xgboost_get_trees(obj):
-    return obj.get_booster().get_dump()
+    trees_df = obj.get_booster().trees_to_dataframe()
+    
+    # Rename columns
+    trees_df = \
+        trees_df.rename(columns={
+            'Tree'     : 'tree_index',
+            'ID'       : 'node_index',
+            'Feature'  : 'split_feature',
+            'Split'    : 'threshold',
+            'Yes'      : 'left_child',
+            'No'       : 'right_child',
+            'Missing'  : 'missing',
+            'Gain'     : 'split_gain',
+            'Cover'    : 'count',
+            'Category' : 'category' 
+        })
+    
+    # Remving Node column
+    trees_df = trees_df.drop(columns=['Node'])
+    
+    # Renaming features if needed
+    feature_names = obj.get_booster().feature_names
+    
+    if feature_names is None:
+        trees_df['split_feature'] = \
+            trees_df['split_feature'].str[1:] \
+            .apply(lambda x: int(x) if x != 'Leaf' else None)
+    
+    return trees_df
 
 
 # =============================================================================
 #                                  LIGHTGBM
 # =============================================================================
 
-def lightgbm_get_trees(obj, as_dataframe=True):
-    if as_dataframe:
-        return obj.booster_.trees_to_dataframe()
-    else:
-        return obj.booster_.dump_model()
+def lightgbm_get_trees(obj):
+    trees_df = obj.booster_.trees_to_dataframe()
+    
+    # Transform missing_direction
+    trees_df['missing'] = np.where(
+        trees_df['missing_direction'] == 'left',
+        trees_df['left_child'],
+        trees_df['right_child']
+    )
+    trees_df = trees_df.drop(columns=['missing_direction'])
+    
+    # Transform feature names 
+    feature_names = obj.booster_.feature_name()
+    
+    # Heuristics: Column_0 is a generic name for feature
+    if feature_names[0] == 'Column_0':
+        trees_df['split_feature'] = \
+            trees_df['split_feature'].str[7:] \
+            .apply(lambda x: int(x) if x is not None else x)
+            
+    # TODO: standarize node_index? (i.e. remove L and S)
+    return trees_df
+
     
 # =============================================================================
 #                                  CATBOOST
 # =============================================================================
 
 def catboost_get_trees(obj):
-    n_trees = obj._object._get_tree_count()
-    tree_splits = [
-        obj._object._get_tree_splits(i, None) for i in range(n_trees)
-    ]
-    leaf_values = [
-        obj._get_tree_leaf_values(i) for i in range(n_trees)
-    ]
+    
+    # Saving temporary model dump and loading JSON file
+    model_name = '_tmp.dump'
+    obj.save_model('_tmp.dump', 'json')
+    with open(model_name) as f:
+        trees_json = json.load(f)
+    os.remove(model_name)
+    
+    # Getting parts of the model
+    oblivious_trees = trees_json['oblivious_trees']
+    features_info   = trees_json['features_info']
+    
+    # Parsing model dump
+    df = []
 
-    if not obj._object._is_oblivious():
-        step_nodes = [
-            obj._get_tree_step_nodes(i) for i in range(n_trees) 
-        ]
-        node_to_leaf = [
-            obj._get_tree_node_to_leaf(i) for i in range(n_trees) 
-        ] 
-    return 
-
-
-
-
+    for tree_index, tree in enumerate(oblivious_trees):
+        tree_depth = len(tree['splits'])
+        last_max = 0
+        for node_depth, split in enumerate(tree['splits']):
+            level_width = 2 ** node_depth
+            next_level_width = 2 ** (node_depth + 1)
+            current_max = last_max + level_width
+            
+            if node_depth == tree_depth:
+                left_child = [None] * level_width
+                right_child = [None] * level_width
+                weight = tree['leaf_weights']
+                value = tree['leaf_values']
+            else:
+                left_child = np.arange(current_max, current_max + next_level_width, 2)
+                right_child = np.arange(current_max + 1, current_max + 1 + next_level_width, 2)
+                weight = [None] * level_width
+                value = [None] * level_width
+            
+            node_index = np.arange(last_max, last_max + level_width)
+            node_index = [f'{tree_index}-{node_idx}' for node_idx in node_index]
+            
+            level_nodes = pd.DataFrame({
+                'tree_index'        : [tree_index] * level_width,
+                'node_depth'        : [tree_index] * level_width,
+                'node_index'        : node_index,
+                'left_child'        : left_child,
+                'right_child'       : right_child,
+                #'parent_index'      : None,
+                #'split_gain'        : None,
+                'split_feature'     : [split['float_feature_index']] * level_width,
+                'threshold'         : [split['border']] * level_width,
+                #'missing_direction' : None,
+                #'missing_type'      : None,
+                'value'             : value,
+                'weight'            : weight,
+                #'count'             : None 
+            })  
+            df.append(level_nodes)
+            last_max += level_width
+    trees_df = pd.concat(df)     
+    
+    return trees_df
 
 
 
 if __name__ == '__main__':
-    from sklearn.datasets import make_classification
+    pass
     
-    from sklearn.ensemble import GradientBoostingClassifier
-    from xgboost import XGBClassifier
-    from lightgbm import LGBMClassifier
-    from catboost import CatBoostClassifier
-    import re
-    
-    from sklearn.tree import plot_tree  
-    
-    X, y = make_classification()
-    
-    
-    sklearn_gbm = GradientBoostingClassifier().fit(X, y)
-    xgb = XGBClassifier().fit(X, y)
-    lgb = LGBMClassifier().fit(X, y)
-    cab = CatBoostClassifier().fit(X, y)
-    
-    # sklearn
-    dt = sklearn_gbm.estimators_[0][0]
-    #sk_tree = Tree.from_sklearn(dt)
-    
-    # XGBoost
-    xgb_trees = xgb.get_booster().get_dump()
-    xgb_tree = xgb_trees[0]
-    #xgb_tree_ = Tree.from_xgboost(xgb_tree)
-    
-    # LightGBM
-    lgb_trees = lgb.booster_.dump_model()
-    lgb_tree = lgb_trees['tree_info']
-    
-    st = '0:[f17<0.216996461] yes=1,no=2,missing=1'
-    prog = re.compile('.*\:\[f(\d+).*')
-    prog.match(st)[0]
-    
-    # CatBoost
-    
-    
-    
-    # Creating a data frame
-    
-    # ['tree_index',
-    #  'node_depth',
-    #  'node_index',
-    #  'left_child',
-    #  'right_child',
-    #  'parent_index',
-    #  'split_feature',
-    #  'split_gain',
-    #  'threshold',
-    #  'decision_type',
-    #  'missing_direction',
-    #  'missing_type',
-    #  'value',
-    #  'weight',
-    #  'count']
-    
-    import pandas as pd
-    
-    
-    sk_trees = sklearn_gbm.estimators_
-    
-    nodes = []
-    
-    for tree_index, tree in enumerate(sk_trees):
-        tree = tree[0].tree_
-        
-        print(tree_index)
-        
-        decision_type = '<='
-        
-        has_children = (tree.children_left != -1) & (tree.children_right != -1)
-        
-        # See: https://github.com/scikit-learn/scikit-learn/blob/f034f57b1ad7bc5a7a5dd342543cea30c85e74ff/sklearn/tree/_tree.pyx#L1087
-        df = pd.DataFrame({
-            'tree_index'        : [tree_index] * tree.node_count,
-            'node_depth'        : None,
-            'node_index'        : list(range(0, tree.node_count)),
-            'left_child'        : tree.children_left,
-            'right_child'       : tree.children_right,
-            'parent_index'      : None,
-            'split_feature'     : tree.feature,
-            'split_gain'        : None,
-            'threshold'         : tree.threshold,
-            'decision_type'     : [decision_type if hc else None for hc in has_children ],
-            'missing_direction' : None,
-            'missing_type'      : None,
-            'value'             : tree.value.ravel(),
-            'weight'            : None,
-            'count'             : tree.n_node_samples 
-        })

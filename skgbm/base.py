@@ -93,7 +93,7 @@ apply_fun = {
 #                             GET TREES
 # =============================================================================
 
-get_trees_fun = {
+trees_to_dataframe_fun = {
     'sklearn': sklearn_get_trees,
     'xgboost' : xgboost_get_trees,
     'lightgbm' : lightgbm_get_trees,
@@ -107,7 +107,7 @@ class GBMWrapper:
     def __init__(self, estimator):
         self.estimator = estimator
         self._apply = match_fun(self.estimator, apply_fun) 
-        self._get_trees = match_fun(self.estimator, get_trees_fun) 
+        self._trees_to_dataframe = match_fun(self.estimator, trees_to_dataframe_fun) 
         
     def fit(self, X, y, **kwargs):
         self.estimator.fit(X, y, **kwargs)
@@ -116,8 +116,8 @@ class GBMWrapper:
     def apply(self, X):
         return self._apply(self.estimator, X)
     
-    def get_trees(self, as_dataframe=True):
-        return self._get_trees()
+    def trees_to_dataframe(self, as_dataframe=True):
+        return self._trees_to_dataframe(self.estimator)
 
 
 if __name__ == '__main__':
