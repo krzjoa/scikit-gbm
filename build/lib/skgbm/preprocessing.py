@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Created on Sat Apr 15 17:46:28 2023
+
+@author: krzysztof
+"""
 
 import scipy
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -7,6 +12,7 @@ from sklearn.preprocessing import OneHotEncoder
 
 from .base import GBMWrapper
 
+import pdb
 
 class GBMFeaturizer(BaseEstimator, TransformerMixin, GBMWrapper):
     """
@@ -23,15 +29,9 @@ class GBMFeaturizer(BaseEstimator, TransformerMixin, GBMWrapper):
     
     Examples
     --------
-    >>> from sklearn.datasets import load_diabetes
     >>> from skgbm.preprocessing import GBMFeaturizer
-    >>> from lightgbm import LGBMRegressor
-    >>>
-    >>> X, y = load_diabetes(return_X_y=True)
-    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
-    >>> gbm_featurizer = GBMFeaturizer(LGBMRegressor())
-    >>> gbm_featurizer.fit(X_train, y_train)
-    >>> gbm_featurizer.transform(X_test)
+    >>> 
+    
     
     """
     
@@ -54,6 +54,7 @@ class GBMFeaturizer(BaseEstimator, TransformerMixin, GBMWrapper):
         if hasattr(self, 'ohe'):
             output = self.ohe.transform(output)
         if self.append:
+            # pdb.set_trace()
             output = scipy.sparse.hstack([X, output])
         return output
     
