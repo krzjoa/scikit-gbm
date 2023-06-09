@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Apr 15 17:46:28 2023
-
-@author: krzysztof
-"""
 
 import scipy
 from sklearn.base import BaseEstimator, TransformerMixin
