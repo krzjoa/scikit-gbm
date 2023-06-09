@@ -1,4 +1,7 @@
 # scikit-gbm
+
+[![Documentation Status](https://readthedocs.org/projects/scikit-gbm/badge/?version=latest)](https://scikit-gbm.readthedocs.io/en/latest/?badge=latest)
+
 scikit-learn compatible tools to work with GBM models
 
 ## Installation
