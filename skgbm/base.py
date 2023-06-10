@@ -16,8 +16,9 @@ try:
 except:
     pass
 
-from .trees_extraction import sklearn_get_trees, xgboost_get_trees, \
-    lightgbm_get_trees, catboost_get_trees
+from .trees_extraction import sklearn_trees_to_dataframe, \
+    xgboost_trees_to_dataframe, lightgbm_trees_to_dataframe, \
+    catboost_trees_to_dataframe
 
 
 # from sklearn.ensemble import GradientBoostingRegressor
@@ -94,10 +95,10 @@ apply_fun = {
 # =============================================================================
 
 trees_to_dataframe_fun = {
-    'sklearn': sklearn_get_trees,
-    'xgboost' : xgboost_get_trees,
-    'lightgbm' : lightgbm_get_trees,
-    'catboost' : catboost_get_trees,
+    'sklearn': sklearn_trees_to_dataframe,
+    'xgboost' : xgboost_trees_to_dataframe,
+    'lightgbm' : lightgbm_trees_to_dataframe,
+    'catboost' : catboost_trees_to_dataframe,
 }
 
 
@@ -116,7 +117,7 @@ class GBMWrapper:
     def apply(self, X):
         return self._apply(self.estimator, X)
     
-    def trees_to_dataframe(self, as_dataframe=True):
+    def trees_to_dataframe(self):
         return self._trees_to_dataframe(self.estimator)
 
 

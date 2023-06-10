@@ -15,4 +15,5 @@ Submodules
    :maxdepth: 4
    
   skgbm.preprocessing
+  skgbm.tools
     
