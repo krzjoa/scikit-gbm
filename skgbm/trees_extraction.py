@@ -10,8 +10,6 @@ import numpy as np
 import json
 import os
 
-import pdb
-
 
 COLUMN_ORDER = [
     'tree_index', 
@@ -171,14 +169,25 @@ def lightgbm_trees_to_dataframe(obj):
 #                                  CATBOOST
 # =============================================================================
 
-def catboost_trees_to_dataframe(obj):
-    
+def _catboost_raw_trees(obj):
     # Saving temporary model dump and loading JSON file
     model_name = '_tmp.dump'
     obj.save_model('_tmp.dump', 'json')
     with open(model_name) as f:
         trees_json = json.load(f)
     os.remove(model_name)
+    return trees_json
+
+def _catboost_get_splits(trees_json):
+    return [split['border'] 
+            for tree in  trees_json['oblivious_trees']
+            for split in tree['splits']
+        ]
+
+
+def catboost_trees_to_dataframe(obj):
+    
+    trees_json = _catboost_raw_trees(obj)
     
     # Getting parts of the model
     oblivious_trees = trees_json['oblivious_trees']

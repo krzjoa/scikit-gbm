@@ -67,4 +67,3 @@ def trees_to_dataframe(obj) -> pd.DataFrame:
     >>> gb_df = trees_to_dataframe(gb_reg)
     """
     return GBMWrapper(obj).trees_to_dataframe()
-
