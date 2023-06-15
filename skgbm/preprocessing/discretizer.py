@@ -8,7 +8,7 @@ from sklearn.base import clone
 
 from feature_engine.discretisation import ArbitraryDiscretiser
 
-from .base import GBMWrapper
+from ..base import GBMWrapper
 from ..tools import trees_to_dataframe
 from ..trees_extraction import _catboost_raw_trees, _catboost_get_splits
 
