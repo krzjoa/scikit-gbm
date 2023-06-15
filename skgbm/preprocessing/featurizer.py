@@ -5,7 +5,7 @@ import scipy
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder
 
-from .base import GBMWrapper
+from ..base import GBMWrapper
 
 
 class GBMFeaturizer(BaseEstimator, TransformerMixin, GBMWrapper):
