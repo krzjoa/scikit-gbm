@@ -6,9 +6,11 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.base import clone
 
+from feature_engine.discretisation import ArbitraryDiscretiser
+
 from .base import GBMWrapper
 from ..tools import trees_to_dataframe
-from ..trees_extraction import _catboost_raw_trees, _catbost_get_splits
+from ..trees_extraction import _catboost_raw_trees, _catboost_get_splits
 
 try:
     import catboost
@@ -21,12 +23,14 @@ except:
     # If there is no CatBoost, any CatBoost model can't be passed anyway
     CATBOOST_CLASSES = []
 
-
+import pdb
 
 
 class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
     """
     Continuous feature discretizer based on gradinet boosted decision tree ensembles
+    Internally, it uses [ArbitraryDiscretiser](https://feature-engine.trainindata.com/en/1.0.x/discretisation/ArbitraryDiscretiser.html)
+    to handle discretization step after finding the optimal thresholds.
     
     Parameters
     ----------
@@ -42,14 +46,13 @@ class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
     Examples
     --------
     >>> from sklearn.datasets import load_diabetes
-    >>> from skgbm.preprocessing import GBMFeaturizer
-    >>> from lightgbm import LGBMRegressor
+    >>> from skgbm.preprocessing import GBMDiscretizer
+    >>> from xgboost import XGBClassifier
     >>>
     >>> X, y = load_diabetes(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
-    >>> gbm_featurizer = GBMFeaturizer(LGBMRegressor())
-    >>> gbm_featurizer.fit(X_train, y_train)
-    >>> gbm_featurizer.transform(X_test)
+    >>> gbm_discretizer = GBMDiscretizer(XGBClassifier())
+    >>> X_train_disc = gbm_discretizer.fit_transform(X_train, y_train)
     
     """
     
@@ -62,32 +65,49 @@ class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
             self.ohe = OneHotEncoder()
         self.append = append
         self.columns = columns
+        self.estimators_ = {}
+        self.discretizer_ = None
         super().__init__(estimator)
     
     def fit(self, X, y, **kwargs):
         super().fit(X, y, **kwargs)
         
         # Fitting estimators (one per tranformed column)
-        self.estimators_ = {}
+        disc_thresholds_ = {}
         
         for col in self.columns:
             self.estimators_[col] = est_ =  \
-                clone(self.estimator).fit(X, y)
+                clone(self.estimator).fit(X[col], y)
             
             # Getting the data frame for CatBoost is redundant
             if type(est_) not in CATBOOST_CLASSES:
                 trees = trees_to_dataframe(est_)
-                splits = trees.sort_values('threshold')['threshold'].drop_duplicates()
+                splits = trees \
+                    .sort_values('threshold')['threshold'] \
+                    .drop_duplicates() \
+                    .dropna() \
+                    .tolist()
             else:
                 trees = _catboost_raw_trees(est_)
+                #pdb.set_trace()
+                splits = _catboost_get_splits(trees)
+                splits = np.sort(np.unique(splits)).tolist()
+            
+            splits = [-np.inf] + splits + [np.inf]
+            disc_thresholds_[col] = splits
+        
+        self.discretizer_ = \
+            ArbitraryDiscretiser(binning_dict=disc_thresholds_)
+            
+        X_disc = self.discretizer_.fit_transform(X)
         
         if hasattr(self, 'ohe'):
-            X_ = self.apply(X)
-            self.ohe.fit(X_)
+            self.ohe.fit(X_disc)
+            
         return self
     
     def transform(self, X, y=None, **kwargs):
-        output = self.apply(X)
+        output = self.discretizer_.transform(X)
         if hasattr(self, 'ohe'):
             output = self.ohe.transform(output)
         if self.append:
@@ -97,5 +117,42 @@ class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
     def fit_transform(self, X, y, **kwargs):
         return self.fit(X, y, **kwargs).transform(X, y, **kwargs)
     
+    @property       
+    def binner_dict_(self):
+        return self.discretizer_.binner_dict_
+        
+    
 
+if __name__ == '__main__':
+    from sklearn.model_selection import train_test_split
+    from sklearn.datasets import load_iris
+    from xgboost import XGBClassifier
+    from catboost import CatBoostClassifier
+    
+    import pandas as pd
+    import numpy as np
+    
+    # Loading data
+    iris = load_iris()
+    # https://stackoverflow.com/questions/38105539/how-to-convert-a-scikit-learn-dataset-to-a-pandas-dataset
+    data = pd.DataFrame(
+        data= np.c_[iris['data'], iris['target']],
+        columns= iris['feature_names'] + ['target']
+    )
+    data.columns = data.columns.str[:-5]
+    data.columns = data.columns.str.replace(' ', '_')
+    
+    # Data splitting
+    X, y = data.iloc[:, :4], data.iloc[:, 4:]
+    X_train, X_test, y_train, y_test = \
+        train_test_split(X, y, test_size=0.3, random_state=0)
+    X_cols = X.columns.tolist()
+    
+    gbm_discretizer = GBMDiscretizer(XGBClassifier(), X_cols, one_hot=False)
+    gbm_discretizer = GBMDiscretizer(CatBoostClassifier(verbose=0), X_cols, one_hot=False)
+    
+    gbm_discretizer.fit_transform(X_train, y_train)
+    
+    
+    
 

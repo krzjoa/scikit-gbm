@@ -178,7 +178,7 @@ def _catboost_raw_trees(obj):
     os.remove(model_name)
     return trees_json
 
-def _catbost_get_splits(trees_json):
+def _catboost_get_splits(trees_json):
     return [split['border'] 
             for tree in  trees_json['oblivious_trees']
             for split in tree['splits']
