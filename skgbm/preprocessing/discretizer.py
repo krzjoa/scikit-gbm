@@ -23,8 +23,7 @@ except:
     # If there is no CatBoost, any CatBoost model can't be passed anyway
     CATBOOST_CLASSES = []
 
-import pdb
-
+import warnings
 
 class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
     """
@@ -49,11 +48,34 @@ class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
     >>> from skgbm.preprocessing import GBMDiscretizer
     >>> from xgboost import XGBClassifier
     >>>
-    >>> X, y = load_diabetes(return_X_y=True)
+    >>>     iris = load_iris()
+    >>>    data = pd.DataFrame(
+    >>>        data= np.c_[iris['data'], iris['target']],
+    >>>        columns= iris['feature_names'] + ['target']
+    >>>    )
+    >>> data.columns = data.columns.str[:-5]
+    >>> data.columns = data.columns.str.replace(' ', '_')
+    >>>    
+    >>> # Data splitting
+    >>> X, y = data.iloc[:, :4], data.iloc[:, 4:]
+    >>> X_train, X_test, y_train, y_test = \
+    >>>     train_test_split(X, y, test_size=0.3, random_state=0)
+    >>> X_cols = X.columns.tolist()
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
-    >>> gbm_discretizer = GBMDiscretizer(XGBClassifier())
+    >>> gbm_discretizer = GBMDiscretizer(CatBoostClassifier(verbose=0), X_cols, one_hot=False)
     >>> X_train_disc = gbm_discretizer.fit_transform(X_train, y_train)
-    
+    >>> #      sepal_length  sepal_width  petal_length  petal_width
+    >>> # 60              7            0             9            5
+    >>> # 116            22            9            29           13
+    >>> # 144            24           12            31           20
+    >>> # 119            17            1            24           10
+    >>> # 108            24            4            32           13
+    >>> # ..            ...          ...           ...          ...
+    >>> # 9               6           10             4            0
+    >>> # 103            20            8            30           13
+    >>> # 67             15            6            15            5
+    >>> # 117            32           17            38           17
+    >>> # 47              3           11             3            1
     """
     
     def __init__(self, estimator, 
@@ -70,14 +92,16 @@ class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
         super().__init__(estimator)
     
     def fit(self, X, y, **kwargs):
-        super().fit(X, y, **kwargs)
-        
+            
         # Fitting estimators (one per tranformed column)
         disc_thresholds_ = {}
         
         for col in self.columns:
-            self.estimators_[col] = est_ =  \
-                clone(self.estimator).fit(X[col], y)
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                self.estimators_[col] = est_ =  \
+                    clone(self.estimator).fit(X[[col]], y)
             
             # Getting the data frame for CatBoost is redundant
             if type(est_) not in CATBOOST_CLASSES:
@@ -107,6 +131,7 @@ class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
         return self
     
     def transform(self, X, y=None, **kwargs):
+        # TODO: one_hot encoding to GBMWrapper
         output = self.discretizer_.transform(X)
         if hasattr(self, 'ohe'):
             output = self.ohe.transform(output)
@@ -126,6 +151,9 @@ class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
 if __name__ == '__main__':
     from sklearn.model_selection import train_test_split
     from sklearn.datasets import load_iris
+    
+    from lightgbm import LGBMClassifier
+    from sklearn.ensemble import GradientBoostingClassifier
     from xgboost import XGBClassifier
     from catboost import CatBoostClassifier
     
@@ -149,7 +177,8 @@ if __name__ == '__main__':
     X_cols = X.columns.tolist()
     
     gbm_discretizer = GBMDiscretizer(XGBClassifier(), X_cols, one_hot=False)
-    gbm_discretizer = GBMDiscretizer(CatBoostClassifier(verbose=0), X_cols, one_hot=False)
+    gbm_discretizer = GBMDiscretizer(GradientBoostingClassifier(), X_cols, one_hot=False)
+    gbm_discretizer = GBMDiscretizer(LGBMClassifier(), X_cols, one_hot=False)
     
     gbm_discretizer.fit_transform(X_train, y_train)
     
