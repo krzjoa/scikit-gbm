@@ -4,6 +4,6 @@ Preprocessing
 .. automodule:: skgbm.preprocessing
    :autosummary:
    :autosummary-no-nesting:
+   :autosummary:
    :members:
-   :undoc-members:
    :show-inheritance:
