@@ -1,6 +1,7 @@
 # scikit-gbm
 
 [![Documentation Status](https://readthedocs.org/projects/scikit-gbm/badge/?version=latest)](https://scikit-gbm.readthedocs.io/en/latest/?badge=latest)
+[![PyPI version](https://badge.fury.io/py/scikit-gbm.svg)](https://badge.fury.io/py/scikit-gbm)
 
 scikit-learn compatible tools to work with GBM models
 
