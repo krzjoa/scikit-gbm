@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Preprocessing &mdash; scikit-gbm 0.1 documentation</title>
+  <title>Preprocessing &mdash; scikit-gbm 0.1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -19,6 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Tools" href="skgbm.tools.html" />
     <link rel="prev" title="scikit-gbm API" href="api.html" /> 
 </head>
 
@@ -39,10 +40,8 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">scikit-gbm API</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="api.html#submodules">Submodules</a><ul class="current">
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Preprocessing</a></li>
-</ul>
-</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skgbm.tools.html">Tools</a></li>
 </ul>
 </li>
 </ul>
@@ -77,16 +76,98 @@
 <p><strong>Classes:</strong></p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#skgbm.preprocessing.GBMFeaturizer" title="skgbm.preprocessing.GBMFeaturizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GBMFeaturizer</span></code></a>(estimator[, one_hot, append])</p></td>
-<td><p>Feature generator for any GBM models</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#skgbm.preprocessing.GBMDiscretizer" title="skgbm.preprocessing.GBMDiscretizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GBMDiscretizer</span></code></a>(estimator, columns[, ...])</p></td>
+<td><p>Feature discretizer based on GBDT.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#skgbm.preprocessing.GBMFeaturizer" title="skgbm.preprocessing.GBMFeaturizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GBMFeaturizer</span></code></a>(estimator[, one_hot, append])</p></td>
+<td><p>Feature generator for any GBDT model.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py class">
-<dt class="sig sig-object py" id="skgbm.preprocessing.GBMFeaturizer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">skgbm.preprocessing.</span></span><span class="sig-name descname"><span class="pre">GBMFeaturizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">estimator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">one_hot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/skgbm/preprocessing.html#GBMFeaturizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skgbm.preprocessing.GBMFeaturizer" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="skgbm.preprocessing.GBMDiscretizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">skgbm.preprocessing.</span></span><span class="sig-name descname"><span class="pre">GBMDiscretizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">estimator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">one_hot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/skgbm/preprocessing/discretizer.html#GBMDiscretizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skgbm.preprocessing.GBMDiscretizer" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEstimator</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TransformerMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">GBMWrapper</span></code></p>
-<p>Feature generator for any GBM models</p>
+<p>Feature discretizer based on GBDT.</p>
+<p>Internally, it uses <a class="reference external" href="https://feature-engine.trainindata.com/en/1.0.x/discretisation/ArbitraryDiscretiser.html">ArbitraryDiscretiser</a>
+to handle discretization step after finding the optimal thresholds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>estimator</strong> (<em>object</em>) – A gradient boosting model from scikit-learn, XGBoost, LightGBM or CatBoost library</p></li>
+<li><p><strong>one_hot</strong> (<em>bool</em>) – Transform the ouput categorical features using one-hot encoding</p></li>
+<li><p><strong>columns</strong> (<em>list of str</em>) – List of column names to be transformed</p></li>
+<li><p><strong>append</strong> (<em>bool</em>) – Append the newly created features to the original ones</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">load_diabetes</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">skgbm.preprocessing</span> <span class="kn">import</span> <span class="n">GBMDiscretizer</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">xgboost</span> <span class="kn">import</span> <span class="n">XGBClassifier</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">iris</span> <span class="o">=</span> <span class="n">load_iris</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>       <span class="n">data</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">iris</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">],</span> <span class="n">iris</span><span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]],</span>
+<span class="gp">&gt;&gt;&gt; </span>       <span class="n">columns</span><span class="o">=</span> <span class="n">iris</span><span class="p">[</span><span class="s1">&#39;feature_names&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span> <span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">str</span><span class="p">[:</span><span class="o">-</span><span class="mi">5</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Data splitting</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">],</span> <span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">:]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_cols</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gbm_discretizer</span> <span class="o">=</span> <span class="n">GBMDiscretizer</span><span class="p">(</span><span class="n">CatBoostClassifier</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>                                 <span class="n">X_cols</span><span class="p">,</span> <span class="n">one_hot</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X_train_disc</span> <span class="o">=</span> <span class="n">gbm_discretizer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#      sepal_length  sepal_width  petal_length  petal_width</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># 60              7            0             9            5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># 116            22            9            29           13</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># 144            24           12            31           20</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># 119            17            1            24           10</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># 108            24            4            32           13</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># ..            ...          ...           ...          ...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># 9               6           10             4            0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># 103            20            8            30           13</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># 67             15            6            15            5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># 117            32           17            38           17</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># 47              3           11             3            1</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="skgbm.preprocessing.GBMDiscretizer.fit_transform">
+<span class="sig-name descname"><span class="pre">fit_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/skgbm/preprocessing/discretizer.html#GBMDiscretizer.fit_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skgbm.preprocessing.GBMDiscretizer.fit_transform" title="Permalink to this definition"></a></dt>
+<dd><p>Fit to data, then transform it.</p>
+<p>Fits transformer to <cite>X</cite> and <cite>y</cite> with optional parameters <cite>fit_params</cite>
+and returns a transformed version of <cite>X</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>array-like of shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Input samples.</p></li>
+<li><p><strong>y</strong> (<em>array-like of shape</em><em> (</em><em>n_samples</em><em>,</em><em>) or </em><em>(</em><em>n_samples</em><em>, </em><em>n_outputs</em><em>)</em><em>,                 </em><em>default=None</em>) – Target values (None for unsupervised transformations).</p></li>
+<li><p><strong>**fit_params</strong> (<em>dict</em>) – Additional fit parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>X_new</strong> – Transformed array.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray array of shape (n_samples, n_features_new)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="skgbm.preprocessing.GBMFeaturizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">skgbm.preprocessing.</span></span><span class="sig-name descname"><span class="pre">GBMFeaturizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">estimator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">one_hot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/skgbm/preprocessing/featurizer.html#GBMFeaturizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skgbm.preprocessing.GBMFeaturizer" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseEstimator</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TransformerMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">GBMWrapper</span></code></p>
+<p>Feature generator for any GBDT model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -108,16 +189,6 @@
 <span class="gp">&gt;&gt;&gt; </span><span class="n">gbm_featurizer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="py method">
-<dt class="sig sig-object py" id="skgbm.preprocessing.GBMFeaturizer.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/skgbm/preprocessing.html#GBMFeaturizer.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skgbm.preprocessing.GBMFeaturizer.fit" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="skgbm.preprocessing.GBMFeaturizer.transform">
-<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/skgbm/preprocessing.html#GBMFeaturizer.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skgbm.preprocessing.GBMFeaturizer.transform" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 </section>
@@ -127,6 +198,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="api.html" class="btn btn-neutral float-left" title="scikit-gbm API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="skgbm.tools.html" class="btn btn-neutral float-right" title="Tools" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

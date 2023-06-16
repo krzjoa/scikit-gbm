@@ -10,7 +10,7 @@ from ..base import GBMWrapper
 
 class GBMFeaturizer(BaseEstimator, TransformerMixin, GBMWrapper):
     """
-    Feature generator for any GBM models
+    Feature generator for any GBDT model.
     
     Parameters
     ----------

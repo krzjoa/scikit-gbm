@@ -27,8 +27,9 @@ import warnings
 
 class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
     """
-    Continuous feature discretizer based on gradinet boosted decision tree ensembles
-    Internally, it uses [ArbitraryDiscretiser](https://feature-engine.trainindata.com/en/1.0.x/discretisation/ArbitraryDiscretiser.html)
+    Feature discretizer based on GBDT.
+    
+    Internally, it uses `ArbitraryDiscretiser <https://feature-engine.trainindata.com/en/1.0.x/discretisation/ArbitraryDiscretiser.html>`_
     to handle discretization step after finding the optimal thresholds.
     
     Parameters
@@ -48,21 +49,23 @@ class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
     >>> from skgbm.preprocessing import GBMDiscretizer
     >>> from xgboost import XGBClassifier
     >>>
-    >>>     iris = load_iris()
-    >>>    data = pd.DataFrame(
+    >>> iris = load_iris()
+    >>> data = pd.DataFrame(
     >>>        data= np.c_[iris['data'], iris['target']],
     >>>        columns= iris['feature_names'] + ['target']
-    >>>    )
+    >>>  )
     >>> data.columns = data.columns.str[:-5]
     >>> data.columns = data.columns.str.replace(' ', '_')
     >>>    
     >>> # Data splitting
     >>> X, y = data.iloc[:, :4], data.iloc[:, 4:]
-    >>> X_train, X_test, y_train, y_test = \
-    >>>     train_test_split(X, y, test_size=0.3, random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    >>>         X, y, test_size=0.3, random_state=0
+    >>> )
     >>> X_cols = X.columns.tolist()
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
-    >>> gbm_discretizer = GBMDiscretizer(CatBoostClassifier(verbose=0), X_cols, one_hot=False)
+    >>> gbm_discretizer = GBMDiscretizer(CatBoostClassifier(verbose=0), 
+    >>>                                  X_cols, one_hot=False)
     >>> X_train_disc = gbm_discretizer.fit_transform(X_train, y_train)
     >>> #      sepal_length  sepal_width  petal_length  petal_width
     >>> # 60              7            0             9            5

@@ -2,8 +2,8 @@ Preprocessing
 =============
 
 .. automodule:: skgbm.preprocessing
+   :imported-members:
    :autosummary:
    :autosummary-no-nesting:
-   :autosummary:
    :members:
    :show-inheritance:

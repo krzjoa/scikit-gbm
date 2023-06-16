@@ -8,8 +8,6 @@ scikit-gbm API
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
 
 .. toctree::
    :maxdepth: 2
