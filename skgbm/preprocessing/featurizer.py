@@ -102,5 +102,8 @@ class GBMFeaturizer(BaseEstimator, TransformerMixin, GBMWrapper):
             output = scipy.sparse.hstack([X, output])
         return output
     
+    def fit_transform(self, X, y, **kwargs):
+        return self.fit(X, y, **kwargs).transform(X, **kwargs)
+    
 
 
