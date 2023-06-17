@@ -1,4 +1,4 @@
-scikit-gbm API
+API reference
 ==================================
 
 .. automodule:: skgbm

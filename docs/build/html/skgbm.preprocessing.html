@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Preprocessing &mdash; scikit-gbm 0.1.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -16,6 +17,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -38,7 +40,8 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">scikit-gbm API</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Preprocessing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="skgbm.tools.html">Tools</a></li>
@@ -101,6 +104,23 @@ to handle discretization step after finding the optimal thresholds.</p>
 </ul>
 </dd>
 </dl>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id1" role="note">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<p>K. Semsch, <a class="reference external" href="https://konradsemsch.netlify.app/2020/05/my-contribution-to-tidymodels-ecosystem-implementing-supervised-discretization-step-with-xgboost-backend/">“My contribution to the tidymodels ecosystem -
+implementing supervised discretization step with XgBoost backend”</a>, 2020.</p>
+</aside>
+<aside class="footnote brackets" id="id2" role="note">
+<span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
+<p>A. Berrado and  G. C. Runger, <a class="reference external" href="https://ieeexplore.ieee.org/document/5069327">“Supervised multivariate discretization in mixed data with Random Forests”</a>,
+2009.</p>
+</aside>
+<aside class="footnote brackets" id="id3" role="note">
+<span class="label"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></span>
+<p>H. Maïssae, <a class="reference external" href="https://cran.r-project.org/web/packages/ForestDisc/index.html">ForestDisc: Forest Discretization (R package)</a>, 2022.</p>
+</aside>
+</aside>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">load_diabetes</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">skgbm.preprocessing</span> <span class="kn">import</span> <span class="n">GBMDiscretizer</span>
@@ -139,6 +159,28 @@ to handle discretization step after finding the optimal thresholds.</p>
 </pre></div>
 </div>
 <dl class="py method">
+<dt class="sig sig-object py" id="skgbm.preprocessing.GBMDiscretizer.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/skgbm/preprocessing/discretizer.html#GBMDiscretizer.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skgbm.preprocessing.GBMDiscretizer.fit" title="Permalink to this definition"></a></dt>
+<dd><p>Fit a set GBDT models (one per each discretized feature), distil split thresholds from them
+and create an internal <a class="reference external" href="https://feature-engine.trainindata.com/en/1.0.x/discretisation/ArbitraryDiscretiser.html">ArbitraryDiscretiser</a>.
+instance based on those values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>{array-like} of shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – A data frame (matrix) of all the features.</p></li>
+<li><p><strong>y</strong> (<em>array-like of shape</em><em> (</em><em>n_samples</em><em>,</em><em>) or </em><em>(</em><em>n_samples</em><em>, </em><em>n_outputs</em><em>)</em><em>, </em><em>default=None</em>) – Target values (this is a supervised transformation).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>self</strong> – Fitted discretizer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="skgbm.preprocessing.GBMDiscretizer.fit_transform">
 <span class="sig-name descname"><span class="pre">fit_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/skgbm/preprocessing/discretizer.html#GBMDiscretizer.fit_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skgbm.preprocessing.GBMDiscretizer.fit_transform" title="Permalink to this definition"></a></dt>
 <dd><p>Fit to data, then transform it.</p>
@@ -161,6 +203,23 @@ and returns a transformed version of <cite>X</cite>.</p>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="skgbm.preprocessing.GBMDiscretizer.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/skgbm/preprocessing/discretizer.html#GBMDiscretizer.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skgbm.preprocessing.GBMDiscretizer.transform" title="Permalink to this definition"></a></dt>
+<dd><p>Discretize the specified subset of columns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>array-like of shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – The data to discretize.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>X_tr</strong> – Transformed array.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>{ndarray, sparse matrix} of shape (n_samples, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -177,6 +236,26 @@ and returns a transformed version of <cite>X</cite>.</p>
 </ul>
 </dd>
 </dl>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id5" role="note">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<p>X. He, J. Pan, O. Jin, T. Xu, B. Liu, T. Xu, Y. Shi, A. Atallah,
+R. Herbrich, S. Bowers, J. Q. Candela, <a class="reference external" href="https://research.fb.com/wp-content/uploads/2016/11/practical-lessons-from-predicting-clicks-on-ads-at-facebook.pdf">“Practical Lessons from Predicting Clicks on Ads at Facebook”</a>, 2016.</p>
+</aside>
+<aside class="footnote brackets" id="id6" role="note">
+<span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
+<p>C. Mougan, <a class="reference external" href="https://towardsdatascience.com/feature-generation-with-gradient-boosted-decision-trees-21d4946d6ab5">“Feature Generation with Gradient Boosted Decision Trees”</a>, Towards Data Science, 2021.</p>
+</aside>
+<aside class="footnote brackets" id="id7" role="note">
+<span class="label"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></span>
+<p>David Masip, <a class="reference external" href="https://sktools.readthedocs.io/en/latest/sktools.html#module-sktools.preprocessing">“sktools — Helpers for scikit learn”</a></p>
+</aside>
+<aside class="footnote brackets" id="id8" role="note">
+<span class="label"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://github.com/bigdong89/xgboostExtension">xgboostExtension: xgboost Extension for Easy Ranking &amp; TreeFeature</a></p>
+</aside>
+</aside>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">load_diabetes</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">skgbm.preprocessing</span> <span class="kn">import</span> <span class="n">GBMFeaturizer</span>
@@ -189,6 +268,44 @@ and returns a transformed version of <cite>X</cite>.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">gbm_featurizer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="skgbm.preprocessing.GBMFeaturizer.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/skgbm/preprocessing/featurizer.html#GBMFeaturizer.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skgbm.preprocessing.GBMFeaturizer.fit" title="Permalink to this definition"></a></dt>
+<dd><p>Fit a GBDT model and OneHotEncoder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>{array-like} of shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – A data frame (matrix) of all the features.</p></li>
+<li><p><strong>y</strong> (<em>array-like of shape</em><em> (</em><em>n_samples</em><em>,</em><em>) or </em><em>(</em><em>n_samples</em><em>, </em><em>n_outputs</em><em>)</em><em>, </em><em>default=None</em>) – Target values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>self</strong> – Fitted discretizer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="skgbm.preprocessing.GBMFeaturizer.transform">
+<span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/skgbm/preprocessing/featurizer.html#GBMFeaturizer.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#skgbm.preprocessing.GBMFeaturizer.transform" title="Permalink to this definition"></a></dt>
+<dd><p>Return features distiled from the GBM model trees.
+The number of the output features depens on <cite>one_hot</cite> and <cite>append</cite> parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>array-like of shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – The data to discretize.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>X_tr</strong> – Transformed array.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>{ndarray, sparse matrix} of shape (n_samples, n_trees) or (n_samples, 1)</p>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 </section>

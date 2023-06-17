@@ -8,6 +8,7 @@
 
 import os
 import sys
+sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../..'))
 
 project = 'scikit-gbm'
@@ -24,6 +25,7 @@ extensions = [
     "sphinx.ext.viewcode",  # to allow vieing the source code in the web page
     "autodocsumm",  # to generate tables of functions, attributes, methods, etc.
     'm2r2',
+    'nbsphinx'
 ]
 templates_path = ['_templates']
 exclude_patterns = []
@@ -36,6 +38,7 @@ exclude_patterns = []
 # html_theme = 'alabaster'
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+html_css_files = ['custom.css']
 
 
 # don't include docstrings from the parent class

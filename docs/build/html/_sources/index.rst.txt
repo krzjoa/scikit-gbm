@@ -6,10 +6,11 @@
 .. mdinclude:: ../../README.md
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+   :caption: Contents
    
    api
 
 .. contents:: Modules
     :local:
-    :depth: 2
+    :depth: 1

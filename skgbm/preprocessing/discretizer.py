@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import warnings
 import scipy
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder
@@ -23,7 +24,7 @@ except:
     # If there is no CatBoost, any CatBoost model can't be passed anyway
     CATBOOST_CLASSES = []
 
-import warnings
+
 
 class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
     """
@@ -42,6 +43,17 @@ class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
         List of column names to be transformed
     append: bool 
         Append the newly created features to the original ones
+        
+    References
+    ----------
+    .. [1] K. Semsch, `"My contribution to the tidymodels ecosystem - 
+           implementing supervised discretization step with XgBoost backend" 
+           <https://konradsemsch.netlify.app/2020/05/my-contribution-to-tidymodels-ecosystem-implementing-supervised-discretization-step-with-xgboost-backend/>`_, 2020.
+    .. [2] A. Berrado and  G. C. Runger, `"Supervised multivariate discretization in mixed data with Random Forests"
+           <https://ieeexplore.ieee.org/document/5069327>`_, 
+           2009.
+    .. [3] H. Maïssae, `ForestDisc: Forest Discretization (R package) 
+           <https://cran.r-project.org/web/packages/ForestDisc/index.html>`_, 2022.
     
     Examples
     --------
@@ -95,7 +107,24 @@ class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
         super().__init__(estimator)
     
     def fit(self, X, y, **kwargs):
-            
+        """
+        Fit a set GBDT models (one per each discretized feature), distil split thresholds from them
+        and create an internal `ArbitraryDiscretiser <https://feature-engine.trainindata.com/en/1.0.x/discretisation/ArbitraryDiscretiser.html>`_.
+        instance based on those values.
+           
+        Parameters
+        ----------
+        X : {array-like} of shape (n_samples, n_features)
+            A data frame (matrix) of all the features.
+        y: array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
+            Target values (this is a supervised transformation).
+        
+        Returns
+        -------
+        self: object
+            Fitted discretizer.
+        """
+                    
         # Fitting estimators (one per tranformed column)
         disc_thresholds_ = {}
         
@@ -116,7 +145,6 @@ class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
                     .tolist()
             else:
                 trees = _catboost_raw_trees(est_)
-                #pdb.set_trace()
                 splits = _catboost_get_splits(trees)
                 splits = np.sort(np.unique(splits)).tolist()
             
@@ -133,7 +161,20 @@ class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
             
         return self
     
-    def transform(self, X, y=None, **kwargs):
+    def transform(self, X, **kwargs):
+        """
+        Discretize the specified subset of columns.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data to discretize.
+        
+        Returns
+        -------
+        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            Transformed array.
+        """
         # TODO: one_hot encoding to GBMWrapper
         output = self.discretizer_.transform(X)
         if hasattr(self, 'ohe'):
@@ -143,7 +184,7 @@ class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
         return output
     
     def fit_transform(self, X, y, **kwargs):
-        return self.fit(X, y, **kwargs).transform(X, y, **kwargs)
+        return self.fit(X, y, **kwargs).transform(X, **kwargs)
     
     @property       
     def binner_dict_(self):
