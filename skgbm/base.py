@@ -9,6 +9,7 @@ Created on Sat Apr 15 16:40:06 2023
 from typing import Final
 
 from sklearn.tree._tree import Tree
+import json
 
 import numpy as np
 try:
@@ -19,6 +20,7 @@ except:
 from .trees_extraction import sklearn_trees_to_dataframe, \
     xgboost_trees_to_dataframe, lightgbm_trees_to_dataframe, \
     catboost_trees_to_dataframe
+from .utils import check_estimator
 
 
 # from sklearn.ensemble import GradientBoostingRegressor
@@ -81,7 +83,35 @@ apply_fun = {
 
 
 # =============================================================================
-#                             GET FEATURES
+#                               LEARNING RATE
+# =============================================================================
+
+def sklearn_learning_rate(obj):
+    return obj.learning_rate
+
+def xgboost_learning_rate(obj):
+    if obj.learning_rate is not None:
+        return obj.learning_rate is not None
+    else:
+        config = json.loads(obj.get_booster().save_config())
+        # Duplicates: eta and learning_rate
+        return config['train_param']['eta']
+
+def lightgbm_learning_rate(obj):
+    return lgb.learning_rate
+
+def catboost_learning_rate(obj):
+    return cab.learning_rate_
+
+learning_rate_fun = {
+    'sklearn': sklearn_learning_rate,
+    'xgboost' : xgboost_learning_rate,
+    'lightgbm' : lightgbm_learning_rate,
+    'catboost' : catboost_learning_rate
+}
+
+# =============================================================================
+#                               GET FEATURES
 # =============================================================================
 
 # gradinet boosting 
@@ -106,9 +136,12 @@ class GBMWrapper:
     """A general wrapper object for all the acceptable models"""
     
     def __init__(self, estimator):
+        check_estimator(estimator)
+        # TODO: try to simplify it
         self.estimator = estimator
         self._apply = match_fun(self.estimator, apply_fun) 
         self._trees_to_dataframe = match_fun(self.estimator, trees_to_dataframe_fun) 
+        self._learning_rate = match_fun(self.estimator, learning_rate_fun)
         
     def fit(self, X, y, **kwargs):
         self.estimator.fit(X, y, **kwargs)
@@ -119,7 +152,11 @@ class GBMWrapper:
     
     def trees_to_dataframe(self):
         return self._trees_to_dataframe(self.estimator)
-
+    
+    @property
+    def learning_rate(self):
+        return self.learning_rate(self.estimator)
+        
 
 if __name__ == '__main__':
     from sklearn.datasets import make_classification
@@ -137,6 +174,7 @@ if __name__ == '__main__':
     sklearn_gbm = GradientBoostingClassifier().fit(X, y)
     xgb = XGBClassifier().fit(X, y)
     cab = CatBoostClassifier().fit(X, y)
+    lgb = LGBMClassifier().fit(X, y)
     
     dt = sklearn_gbm.estimators_[0]
     
