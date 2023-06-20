@@ -3,6 +3,7 @@
 
 import warnings
 import scipy
+import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.base import clone
