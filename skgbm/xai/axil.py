@@ -2,6 +2,7 @@
 
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.utils.validation import check_is_fitted
 
 from ..base import GBMWrapper
 from ..utils import check_is_gbm_regressor
@@ -32,7 +33,6 @@ class AXIL(BaseEstimator, TransformerMixin):
     """
     Instance importance for regression.
     
-    
     Parameters
     ----------
     estimator: object
@@ -47,8 +47,12 @@ class AXIL(BaseEstimator, TransformerMixin):
     
     Examples
     --------
+    >>> from lightgm import LGBRegressor
     >>> from skgbm.xai import AXIL
-    
+    >>> from sklearn.datasets import fetch_data
+    >>>
+    >>> X, y = fetch_data()
+    >>> 
     
     """    
     
@@ -56,6 +60,7 @@ class AXIL(BaseEstimator, TransformerMixin):
         # TODO: check is_fitted
         # TODO: we don't have to store the data?
         check_is_gbm_regressor(estimator)
+        check_is_fitted(estimator)
         self.wrapped_ = GBMWrapper(estimator)
         super().__init__()
     
