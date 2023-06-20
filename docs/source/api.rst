@@ -13,5 +13,6 @@ API reference
    :maxdepth: 2
    
   skgbm.preprocessing
+  skgbm.xai
   skgbm.tools
     
