@@ -20,16 +20,9 @@ except:
 from .trees_extraction import sklearn_trees_to_dataframe, \
     xgboost_trees_to_dataframe, lightgbm_trees_to_dataframe, \
     catboost_trees_to_dataframe
-from .utils import check_estimator
-
-
-# from sklearn.ensemble import GradientBoostingRegressor
-# from xgboost import XGBRanker
-# from lightgbm import LGBMRanker
-# from catboost import CatBoostRanker
+from .utils import check_estimator, is_catboost
 
 # read: https://arxiv.org/pdf/2101.07077.pdf
-
 name_map: Final = {
     
     # scikit-learn
@@ -156,6 +149,14 @@ class GBMWrapper:
     @property
     def learning_rate(self):
         return self.learning_rate(self.estimator)
+    
+    @property
+    def n_estimators(self):
+        if not is_catboost(self.estimator):
+            return self.estimator.n_estimators
+        else:
+            return cab.get_all_params()['iterations']
+            
         
 
 if __name__ == '__main__':

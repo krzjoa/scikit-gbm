@@ -4,8 +4,9 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 
-from ..base import GBMWrapper
+from base import GBMWrapper
 from ..utils import check_is_gbm_regressor
+
 
 # TODO: can be written faster?
 def LCM(vector1, vector2):
@@ -47,7 +48,7 @@ class AXIL(BaseEstimator, TransformerMixin):
     
     Examples
     --------
-    >>> from lightgm import LGBRegressor
+    >>> from lightgm import LGBMRegressor
     >>> from skgbm.xai import AXIL
     >>> from sklearn.datasets import fetch_data
     >>>
@@ -75,7 +76,7 @@ class AXIL(BaseEstimator, TransformerMixin):
         
         # number of observations
         N = len(X)
-        num_trees = self.model.num_trees() # n_estimators?
+        num_trees = self.wrapped_.n_estimators # n_estimators?
         learning_rate = self.wrapped_.learning_rate
         
         # useful matrices
@@ -116,6 +117,16 @@ class AXIL(BaseEstimator, TransformerMixin):
 
 
 if __name__ == '__main__':
-    pass
-
+    from sklearn.datasets import make_regression
+    from sklearn.model_selection import train_test_split
+    from lightgbm import LGBMRegressor 
     
+    X, y = make_regression(n_samples=200)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    
+    lgb_regressor = LGBMRegressor()
+    lgb_regressor.fit(X_train, y_train)
+    
+    axil = AXIL(lgb_regressor)
+    axil.fit(X, y)
+        
