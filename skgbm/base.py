@@ -148,7 +148,7 @@ class GBMWrapper:
     
     @property
     def learning_rate(self):
-        return self.learning_rate(self.estimator)
+        return self._learning_rate(self.estimator)
     
     @property
     def n_estimators(self):

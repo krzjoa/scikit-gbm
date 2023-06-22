@@ -7,6 +7,7 @@ from sklearn.utils.validation import check_is_fitted
 from base import GBMWrapper
 from ..utils import check_is_gbm_regressor
 
+import pdb
 
 # TODO: can be written faster?
 def LCM(vector1, vector2):
@@ -84,11 +85,8 @@ class AXIL(BaseEstimator, TransformerMixin):
         I = np.identity(N)
         
         # Creating matrix of target-leaf membership
-        instance_leaf_membership = self.wrapped_.apply(X)
-        self.lm = np.concatenate((
-            np.ones((1, N)), # First prediction: "one leaf" 
-            instance_leaf_membership.T
-        ), axis = 0) + 1
+        self.lm = self._instance_leaf_membership(X, N)
+        pdb.set_trace()
         
         # Clear list of P matrices (to be used for calculating AXIL weights)
         self.P_list = []
@@ -96,6 +94,10 @@ class AXIL(BaseEstimator, TransformerMixin):
         # iterations 0 model predictions (simply average of training data)
         # corresponds to "tree 0"
         # Contribution to mean
+        # https://lightgbm.readthedocs.io/en/latest/Parameters.html boost_from_average
+        
+        # Check if loss is l2
+        
         P_0 = (1/N) * ones
         self.P_list.append(P_0)
         G_prev = P_0
@@ -111,9 +113,18 @@ class AXIL(BaseEstimator, TransformerMixin):
         self.trained = True
         return self
     
+    
     def transform(X, **kwargs):
         # https://scikit-learn.org/stable/modules/generated/sklearn.utils.validation.check_is_fitted.html
         return X
+    
+    
+    def _instance_leaf_membership(self, X, N):
+        instance_leaf_membership = self.wrapped_.apply(X)
+        return np.concatenate((
+            np.ones((1, N)), # First prediction: "one leaf" 
+            instance_leaf_membership.T
+        ), axis = 0) + 1
 
 
 if __name__ == '__main__':
@@ -121,12 +132,27 @@ if __name__ == '__main__':
     from sklearn.model_selection import train_test_split
     from lightgbm import LGBMRegressor 
     
+    from sklearn.ensemble import GradientBoostingRegressor
+    
     X, y = make_regression(n_samples=200)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     
     lgb_regressor = LGBMRegressor()
     lgb_regressor.fit(X_train, y_train)
     
+    gbm = GradientBoostingRegressor()
+    gbm.fit(X_train, y_train)
+    
     axil = AXIL(lgb_regressor)
     axil.fit(X, y)
+    
+    
+    lgb_regressor.st
+    
+    # Init estimator
+    # GradientBoostingRegressor() -> gbm.init_ (domyślnie: DummyEstimator)
+    # LGBMRegressor() # boost_from_average
+    # 
+    
+    
         
