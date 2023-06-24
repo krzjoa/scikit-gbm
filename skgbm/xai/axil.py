@@ -4,13 +4,13 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 
-from base import GBMWrapper
+from ..base import GBMWrapper
 from ..utils import check_is_gbm_regressor
 
 import pdb
 
 # TODO: can be written faster?
-def LCM(vector1, vector2):
+def lcm(vector1, vector2):
     '''
     utility function to create leaf coincidence matrix L from leaf membership vectors vector1 (train) and vector2 (test)
     element l_s,f in L takes value of 1 IFF observations v1 and v2 are allocated to the same leaf (for v1 in vector1 and v2 in vector2)
@@ -93,9 +93,6 @@ class AXIL(BaseEstimator, TransformerMixin):
         
         # iterations 0 model predictions (simply average of training data)
         # corresponds to "tree 0"
-        # Contribution to mean
-        # https://lightgbm.readthedocs.io/en/latest/Parameters.html boost_from_average
-        
         # Check if loss is l2
         
         P_0 = (1/N) * ones
@@ -105,7 +102,9 @@ class AXIL(BaseEstimator, TransformerMixin):
         # do iterations for trees 1 to num_trees (inclusive)
         # note, LGB trees ingnores the first (training data mean) predictor, so offset by 1
         for i in range(1, num_trees+1):
-            D = LCM(self.lm[i], self.lm[i])
+            # lm[i] has size (1, N)
+            pdb.set_trace()
+            D = lcm(self.lm[i], self.lm[i])
             P = self.learning_rate * ( (D / (ones @ D)) @ (I-G_prev) )
             self. P_list.append(P)
             G_prev = G_prev + P
@@ -120,6 +119,7 @@ class AXIL(BaseEstimator, TransformerMixin):
     
     
     def _instance_leaf_membership(self, X, N):
+        """Creates matrix (n_trees, n_instances)"""
         instance_leaf_membership = self.wrapped_.apply(X)
         return np.concatenate((
             np.ones((1, N)), # First prediction: "one leaf" 
@@ -133,6 +133,8 @@ if __name__ == '__main__':
     from lightgbm import LGBMRegressor 
     
     from sklearn.ensemble import GradientBoostingRegressor
+    
+    from skgbm.xai import AXIL
     
     X, y = make_regression(n_samples=200)
     X_train, X_test, y_train, y_test = train_test_split(X, y)

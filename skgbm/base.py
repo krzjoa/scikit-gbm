@@ -91,10 +91,10 @@ def xgboost_learning_rate(obj):
         return config['train_param']['eta']
 
 def lightgbm_learning_rate(obj):
-    return lgb.learning_rate
+    return obj.learning_rate
 
 def catboost_learning_rate(obj):
-    return cab.learning_rate_
+    return obj.learning_rate_
 
 learning_rate_fun = {
     'sklearn': sklearn_learning_rate,
