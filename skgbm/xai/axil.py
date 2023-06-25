@@ -10,6 +10,7 @@ from ..utils import check_is_gbm_regressor
 import pdb
 
 # TODO: can be written faster?
+# TODO: create lcm_symm
 def lcm(vector1, vector2):
     '''
     utility function to create leaf coincidence matrix L from leaf membership vectors vector1 (train) and vector2 (test)
@@ -162,8 +163,46 @@ class AXIL(BaseEstimator, TransformerMixin):
         self.trained = True
         return self
     
-    def transform(X, **kwargs):
+    def transform(self, X, **kwargs):
         # https://scikit-learn.org/stable/modules/generated/sklearn.utils.validation.check_is_fitted.html
+        
+        if not self.trained:
+            print("Sorry, you first need to fit to training data. Use the fit() method.")
+            return None
+        
+        # list of P matices
+        P = self.P_list
+        
+        # number of instances in training data used to estimate P
+        N, _ = P[0].shape
+        
+        # number of instances in this data
+        S = len(X)
+        
+        # model instance membership of tree leaves 
+        instance_leaf_membership = self.model.predict(data=X, pred_leaf=True)
+        
+        lm_test = np.concatenate((np.ones((1, S)), instance_leaf_membership.T), axis = 0) + 1
+        
+        # number of trees in model
+        num_trees = self.model.num_trees()
+        
+        # ones matrix with same dimensions as P
+        ones_P = np.ones((N, N))
+        
+        # ones matrix with same dimensions as L
+        ones_L = np.ones((N, S))
+        
+        # first tree is just sample average
+        L = ones_L
+        K = (P[0].T @ (L / (ones_P @ L)))
+        
+        # execute for 1 to num_trees (inclusive)
+        for i in range(1, num_trees+1):
+            # Wybieramy tylko odpowiednie liście i sumujemy
+            L = lcm(self.lm_train[i], lm_test[i])
+            K = K + (P[i].T @ (L / (ones_P @ L)))
+        
         return X
     
     
