@@ -82,11 +82,10 @@ class AXIL(BaseEstimator, TransformerMixin):
         
         # useful matrices
         ones = np.ones((N,N))
-        I = np.identity(N)
+        I = np.identity(N) # ones on the diagonal mean here: 100% of the original value
         
         # Creating matrix of target-leaf membership
         self.lm = self._instance_leaf_membership(X, N)
-        pdb.set_trace()
         
         # Clear list of P matrices (to be used for calculating AXIL weights)
         self.P_list = []
@@ -95,23 +94,73 @@ class AXIL(BaseEstimator, TransformerMixin):
         # corresponds to "tree 0"
         # Check if loss is l2
         
-        P_0 = (1/N) * ones
+        # It makes sense anyway, becuase we don't use the predictions here
+        # We only take into account the leaf the particular instance falls in
+        P_0 = ones / N
         self.P_list.append(P_0)
-        G_prev = P_0
+        G_accum = P_0 # idea of residuals
+        
+        # https://docs.scipy.org/doc/scipy/reference/sparse.html
         
         # do iterations for trees 1 to num_trees (inclusive)
         # note, LGB trees ingnores the first (training data mean) predictor, so offset by 1
         for i in range(1, num_trees+1):
             # lm[i] has size (1, N)
-            pdb.set_trace()
             D = lcm(self.lm[i], self.lm[i])
-            P = self.learning_rate * ( (D / (ones @ D)) @ (I-G_prev) )
+            W = D / D.sum(axis=1)
+            resid_pred = I-G_accum
+            P = learning_rate * (W @ resid_pred)
             self. P_list.append(P)
-            G_prev = G_prev + P
+            
+            
+            # On the main diagonal we have only 
+            # W = D / (ones @ D)
+            
+            # D.sum(axis=1) can be considred as 
+            # The number of examples in the leaf the n_th example falls in
+            # (1, N)
+            # Use scparse matrix instead
+            # w_ = D / D.sum(axis=1)
+            # So w_i is the is a raio we have to multiply the target i by to get 
+            # the final prediction of the given leaf
+            
+            # np.diag(w_).sum() adds up to the number of leaves
+            # It means: we still have to cover 0.995 of the prediction 
+            # Or: np.diag((I-G_prev))
+            
+             # This matrices are symmetrical
+             # issymmetric(D)
+             # issymmetric(W)
+             # issymmetric(w_)
+             
+             # We can then formulate the unit test quite easily: check if multiplying it works
+            
+            # This matrix is symmetrical
+            # It means for the first exameple we're checking with relation with 
+            # All the remaining elements. For the second one, we don't need to that for the first element etc.
+            # P_alt_1 = W @ (I-G_accum)
+            # P_alt_2 = W / np.diag((I-G_accum))
+            
+            # from scipy.linalg import issymmetric
+            # issymmetric(P_alt_1, rtol=0.00000000001)
+            # issymmetric(P_alt_1, rtol=0.000000000000001)
+            
+            # Sens operacji I-G_accum
+            # W każdej kolejnej operacji nie liczymy już tak naprawdę średniej 
+            # z targetu y_i, ale średnią z jedgo residuów
+            # Musimy więc w stsowny sposób przeskalować wartość targetu i
+            
+            # Co z ujemnymi wartościami? Chyba to działa, bo jest odejmowanie a nie mnożenie
+            # W tym przypadku macierz 1 symbolizuje 100% wartości oryginalnej
+            
+            P = learning_rate * (W @ (I-G_accum))
+            self. P_list.append(P)
+            
+            # Accumulate weights
+            G_accum += P
         
         self.trained = True
         return self
-    
     
     def transform(X, **kwargs):
         # https://scikit-learn.org/stable/modules/generated/sklearn.utils.validation.check_is_fitted.html
@@ -121,6 +170,7 @@ class AXIL(BaseEstimator, TransformerMixin):
     def _instance_leaf_membership(self, X, N):
         """Creates matrix (n_trees, n_instances)"""
         instance_leaf_membership = self.wrapped_.apply(X)
+        # Zeroes instead of ones
         return np.concatenate((
             np.ones((1, N)), # First prediction: "one leaf" 
             instance_leaf_membership.T
