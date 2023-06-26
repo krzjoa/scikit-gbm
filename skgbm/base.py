@@ -136,6 +136,11 @@ class GBMWrapper:
         self._trees_to_dataframe = match_fun(self.estimator, trees_to_dataframe_fun) 
         self._learning_rate = match_fun(self.estimator, learning_rate_fun)
         
+        # Maybe inject somehow inheriting class??
+        # Idea:
+        # Turn GBMWrapper into an interface, abstract class with only .from_estimator method
+        # https://docs.python.org/3/library/abc.html
+        
     def fit(self, X, y, **kwargs):
         self.estimator.fit(X, y, **kwargs)
         return self

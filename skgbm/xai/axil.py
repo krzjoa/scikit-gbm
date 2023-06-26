@@ -5,9 +5,40 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 
 from ..base import GBMWrapper
-from ..utils import check_is_gbm_regressor
+from ..utils import check_is_gbm_regressor, \
+    is_lightgbm, is_catboost, is_xgboost, is_sklearn_gbm
 
 import pdb
+
+
+LIGHTGBM_RMSE_LOSS = ['regression', 'regression_l2', 'l2', 
+             'mean_squared_error', 'mse', 'l2_root', 
+             'root_mean_squared_error', 'rmse']
+
+
+def check_is_supported_by_axil(estimator):
+    """For the moment, AXIL only accepts model trained with RMSE."""
+    if is_xgboost(estimator):
+        raise Exception("XGBoost regressors are supported yet.")
+    
+    # Common interface to get loss function
+    accepted = False
+    if is_lightgbm(estimator):
+        if estimator.objective_ in LIGHTGBM_RMSE_LOSS:
+            accepted = True
+    elif is_catboost(estimator):
+        if estimator.get_param('loss_function') == 'RMSE':
+            # We're not able to verify bias!!!
+            accepted = True
+    elif is_sklearn_gbm(estimator):
+        if estimator.loss == 'squared_error' and estimator.init_.strategy == 'mean':
+            accepted = True
+    
+    if not accepted:
+        raise Exception("Passed estimator uses loss functions other than RMSE or non-standard initial guess.")
+    
+
+
 
 # TODO: can be written faster?
 # TODO: create lcm_symm
@@ -60,10 +91,10 @@ class AXIL(BaseEstimator, TransformerMixin):
     """    
     
     def __init__(self, estimator: object):
-        # TODO: check is_fitted
         # TODO: we don't have to store the data?
         check_is_gbm_regressor(estimator)
         check_is_fitted(estimator)
+        check_is_supported_by_axil(estimator)
         self.wrapped_ = GBMWrapper(estimator)
         super().__init__()
     
@@ -86,7 +117,7 @@ class AXIL(BaseEstimator, TransformerMixin):
         I = np.identity(N) # ones on the diagonal mean here: 100% of the original value
         
         # Creating matrix of target-leaf membership
-        self.lm = self._instance_leaf_membership(X, N)
+        self.lm_train = self._instance_leaf_membership(X, N)
         
         # Clear list of P matrices (to be used for calculating AXIL weights)
         self.P_list = []
@@ -107,10 +138,12 @@ class AXIL(BaseEstimator, TransformerMixin):
         # note, LGB trees ingnores the first (training data mean) predictor, so offset by 1
         for i in range(1, num_trees+1):
             # lm[i] has size (1, N)
-            D = lcm(self.lm[i], self.lm[i])
+            D = lcm(self.lm_train[i], self.lm_train[i])
             W = D / D.sum(axis=1)
-            resid_pred = I-G_accum
-            P = learning_rate * (W @ resid_pred)
+            # Resid coef is a coefficient, that allows us transition from 
+            # original targets to residuals at n-th iteration
+            resid_coef = I-G_accum
+            P = learning_rate * (W @ resid_coef)
             self. P_list.append(P)
             
             
@@ -180,12 +213,12 @@ class AXIL(BaseEstimator, TransformerMixin):
         S = len(X)
         
         # model instance membership of tree leaves 
-        instance_leaf_membership = self.model.predict(data=X, pred_leaf=True)
+        lm_test = self._instance_leaf_membership(X, S)
         
-        lm_test = np.concatenate((np.ones((1, S)), instance_leaf_membership.T), axis = 0) + 1
+        #lm_test = np.concatenate((np.ones((1, S)), instance_leaf_membership.T), axis = 0) + 1
         
         # number of trees in model
-        num_trees = self.model.num_trees()
+        num_trees = self.wrapped_.n_estimators
         
         # ones matrix with same dimensions as P
         ones_P = np.ones((N, N))
@@ -220,6 +253,7 @@ if __name__ == '__main__':
     from sklearn.datasets import make_regression
     from sklearn.model_selection import train_test_split
     from lightgbm import LGBMRegressor 
+    from catboost import CatBoostRegressor
     
     from sklearn.ensemble import GradientBoostingRegressor
     
@@ -234,9 +268,12 @@ if __name__ == '__main__':
     gbm = GradientBoostingRegressor()
     gbm.fit(X_train, y_train)
     
-    axil = AXIL(lgb_regressor)
-    axil.fit(X, y)
+    cb_regressor = CatBoostRegressor().fit(X_train, y_train)
     
+    axil = AXIL(lgb_regressor)
+    axil.fit(X_train, y_train)
+     
+    axil.transform(X_train)
     
     lgb_regressor.st
     
