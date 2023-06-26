@@ -160,7 +160,7 @@ class GBMWrapper:
         if not is_catboost(self.estimator):
             return self.estimator.n_estimators
         else:
-            return cab.get_all_params()['iterations']
+            return self.estimator.get_all_params()['iterations']
             
         
 

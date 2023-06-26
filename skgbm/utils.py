@@ -50,7 +50,7 @@ CATBOOST_ESTIMATORS = [
 # =============================================================================
 
 SKLEARN_CLASSIFIER = "GradientBoostingClassifier"
-SKLEARN_REGRESSOR = "GradientBoostingRegressor",
+SKLEARN_REGRESSOR = "GradientBoostingRegressor"
 
 SKLEARN_ESTIMATORS = [
     SKLEARN_CLASSIFIER,

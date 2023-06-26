@@ -137,58 +137,26 @@ class AXIL(BaseEstimator, TransformerMixin):
         # do iterations for trees 1 to num_trees (inclusive)
         # note, LGB trees ingnores the first (training data mean) predictor, so offset by 1
         for i in range(1, num_trees+1):
+            
+            # TODO: do use sparse matrices
+            # D and W are symmetric issymmetric(D, rtol=0.00001)
             # lm[i] has size (1, N)
             D = lcm(self.lm_train[i], self.lm_train[i])
-            W = D / D.sum(axis=1)
+            W = D / D.sum(axis=1) # originally: W = D / (ones @ D)
+            #W = D / (ones @ D)
             # Resid coef is a coefficient, that allows us transition from 
             # original targets to residuals at n-th iteration
             resid_coef = I-G_accum
             P = learning_rate * (W @ resid_coef)
             self. P_list.append(P)
-            
-            
-            # On the main diagonal we have only 
-            # W = D / (ones @ D)
-            
-            # D.sum(axis=1) can be considred as 
-            # The number of examples in the leaf the n_th example falls in
-            # (1, N)
+        
             # Use scparse matrix instead
-            # w_ = D / D.sum(axis=1)
             # So w_i is the is a raio we have to multiply the target i by to get 
             # the final prediction of the given leaf
             
             # np.diag(w_).sum() adds up to the number of leaves
             # It means: we still have to cover 0.995 of the prediction 
             # Or: np.diag((I-G_prev))
-            
-             # This matrices are symmetrical
-             # issymmetric(D)
-             # issymmetric(W)
-             # issymmetric(w_)
-             
-             # We can then formulate the unit test quite easily: check if multiplying it works
-            
-            # This matrix is symmetrical
-            # It means for the first exameple we're checking with relation with 
-            # All the remaining elements. For the second one, we don't need to that for the first element etc.
-            # P_alt_1 = W @ (I-G_accum)
-            # P_alt_2 = W / np.diag((I-G_accum))
-            
-            # from scipy.linalg import issymmetric
-            # issymmetric(P_alt_1, rtol=0.00000000001)
-            # issymmetric(P_alt_1, rtol=0.000000000000001)
-            
-            # Sens operacji I-G_accum
-            # W każdej kolejnej operacji nie liczymy już tak naprawdę średniej 
-            # z targetu y_i, ale średnią z jedgo residuów
-            # Musimy więc w stsowny sposób przeskalować wartość targetu i
-            
-            # Co z ujemnymi wartościami? Chyba to działa, bo jest odejmowanie a nie mnożenie
-            # W tym przypadku macierz 1 symbolizuje 100% wartości oryginalnej
-            
-            P = learning_rate * (W @ (I-G_accum))
-            self. P_list.append(P)
             
             # Accumulate weights
             G_accum += P
@@ -236,7 +204,7 @@ class AXIL(BaseEstimator, TransformerMixin):
             L = lcm(self.lm_train[i], lm_test[i])
             K = K + (P[i].T @ (L / (ones_P @ L)))
         
-        return X
+        return K
     
     
     def _instance_leaf_membership(self, X, N):
@@ -258,6 +226,7 @@ if __name__ == '__main__':
     from sklearn.ensemble import GradientBoostingRegressor
     
     from skgbm.xai import AXIL
+    import numpy as np
     
     X, y = make_regression(n_samples=200)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
@@ -273,9 +242,17 @@ if __name__ == '__main__':
     axil = AXIL(lgb_regressor)
     axil.fit(X_train, y_train)
      
-    axil.transform(X_train)
+    k_test = axil.transform(X_test)
+    y_pred = lgb_regressor.predict(X_test)
     
-    lgb_regressor.st
+    k_test.T @ y_train
+    
+    y_pred
+    
+    np.isclose(y_pred, k_test.T @ y_train, rtol=0.000001).all()
+    
+    
+    
     
     # Init estimator
     # GradientBoostingRegressor() -> gbm.init_ (domyślnie: DummyEstimator)
