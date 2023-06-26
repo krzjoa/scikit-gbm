@@ -18,11 +18,11 @@ LIGHTGBM_RMSE_LOSS = ['regression', 'regression_l2', 'l2',
 
 def check_is_supported_by_axil(estimator):
     """For the moment, AXIL only accepts model trained with RMSE."""
-    if is_xgboost(estimator):
-        raise Exception("XGBoost regressors are supported yet.")
+    # if is_xgboost(estimator):
+    #     raise Exception("XGBoost regressors are supported yet.")
     
     # Common interface to get loss function
-    accepted = False
+    accepted = True
     if is_lightgbm(estimator):
         if estimator.objective_ in LIGHTGBM_RMSE_LOSS:
             accepted = True
@@ -224,6 +224,7 @@ if __name__ == '__main__':
     from sklearn.model_selection import train_test_split
     from lightgbm import LGBMRegressor 
     from catboost import CatBoostRegressor
+    from xgboost import XGBRegressor
     
     from sklearn.ensemble import GradientBoostingRegressor
     
@@ -233,7 +234,7 @@ if __name__ == '__main__':
     X, y = make_regression(n_samples=200)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     
-    lgb_regressor = LGBMRegressor()
+    lgb_regressor = XGBRegressor()
     lgb_regressor.fit(X_train, y_train)
     
     gbm = GradientBoostingRegressor()
