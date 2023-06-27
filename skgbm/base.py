@@ -88,7 +88,8 @@ def xgboost_learning_rate(obj):
     else:
         config = json.loads(obj.get_booster().save_config())
         # Duplicates: eta and learning_rate
-        return config['train_param']['eta']
+        eta = config['learner']['gradient_booster']['updater']['grow_colmaker']['train_param']['eta']
+        return float(eta)
 
 def lightgbm_learning_rate(obj):
     return obj.learning_rate
@@ -140,6 +141,9 @@ class GBMWrapper:
         # Idea:
         # Turn GBMWrapper into an interface, abstract class with only .from_estimator method
         # https://docs.python.org/3/library/abc.html
+        
+        # Internal wrapper and dynamic method assignment?
+        # _GBMInternal -> _XGBoostWrapper
         
     def fit(self, X, y, **kwargs):
         self.estimator.fit(X, y, **kwargs)

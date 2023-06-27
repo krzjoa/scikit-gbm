@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+# Original version by Paul Geertsema 2022 (https://github.com/pgeertsema/AXIL_paper/blob/main/axil.py)
 
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
+from numba import jit
 
 from ..base import GBMWrapper
 from ..utils import check_is_gbm_regressor, \
@@ -16,13 +18,15 @@ LIGHTGBM_RMSE_LOSS = ['regression', 'regression_l2', 'l2',
              'root_mean_squared_error', 'rmse']
 
 
+
 def check_is_supported_by_axil(estimator):
-    """For the moment, AXIL only accepts model trained with RMSE."""
-    # if is_xgboost(estimator):
-    #     raise Exception("XGBoost regressors are supported yet.")
+    """For the moment, AXIL only accepts models trained with RMSE."""
+    
+    if is_xgboost(estimator):
+        raise Exception("XGBoost regressors are supported yet.")
     
     # Common interface to get loss function
-    accepted = True
+    accepted = False
     if is_lightgbm(estimator):
         if estimator.objective_ in LIGHTGBM_RMSE_LOSS:
             accepted = True
@@ -36,12 +40,11 @@ def check_is_supported_by_axil(estimator):
     
     if not accepted:
         raise Exception("Passed estimator uses loss functions other than RMSE or non-standard initial guess.")
-    
-
 
 
 # TODO: can be written faster?
 # TODO: create lcm_symm
+@jit(nopython=True)
 def lcm(vector1, vector2):
     '''
     utility function to create leaf coincidence matrix L from leaf membership vectors vector1 (train) and vector2 (test)
@@ -65,7 +68,12 @@ def lcm(vector1, vector2):
 
 class AXIL(BaseEstimator, TransformerMixin):
     """
-    Instance importance for regression.
+    Additive eXplanations with Instance Loadings - instance importance for regression.
+    
+    A method being perhaps a first representative of a novel class of XAI techniques: instance-based explanations.
+    It's application to Gradient Boosted Decsion Trees is based on the following theorem:
+        
+    ... Any GBM regression prediction is a linear combination of training data targets y.
     
     Parameters
     ----------
@@ -102,7 +110,13 @@ class AXIL(BaseEstimator, TransformerMixin):
     def estimator(self):
         return self.wrapped_.estimator
     
-    def fit(self, X, y, **kwargs):
+    def fit(self, X, y=None, **kwargs):
+        """
+        Parameters
+        ----------
+        X:
+        
+        """
         # TODO: is the first estimator always mean? (for any loss function?)
         # check with e.g. quantile loss
         # https://github.com/pgeertsema/AXIL_paper/blob/main/axil.py
@@ -161,16 +175,12 @@ class AXIL(BaseEstimator, TransformerMixin):
             # Accumulate weights
             G_accum += P
         
-        self.trained = True
         return self
     
     def transform(self, X, **kwargs):
-        # https://scikit-learn.org/stable/modules/generated/sklearn.utils.validation.check_is_fitted.html
-        
-        if not self.trained:
-            print("Sorry, you first need to fit to training data. Use the fit() method.")
-            return None
-        
+       
+        check_is_fitted(self, 'P_list')
+
         # list of P matices
         P = self.P_list
         
@@ -180,10 +190,10 @@ class AXIL(BaseEstimator, TransformerMixin):
         # number of instances in this data
         S = len(X)
         
+        #pdb.set_trace()
+        
         # model instance membership of tree leaves 
         lm_test = self._instance_leaf_membership(X, S)
-        
-        #lm_test = np.concatenate((np.ones((1, S)), instance_leaf_membership.T), axis = 0) + 1
         
         # number of trees in model
         num_trees = self.wrapped_.n_estimators
@@ -200,9 +210,9 @@ class AXIL(BaseEstimator, TransformerMixin):
         
         # execute for 1 to num_trees (inclusive)
         for i in range(1, num_trees+1):
-            # Wybieramy tylko odpowiednie liście i sumujemy
             L = lcm(self.lm_train[i], lm_test[i])
-            K = K + (P[i].T @ (L / (ones_P @ L)))
+            # Nans 
+            K = K + np.nan_to_num((P[i].T @ (L / (ones_P @ L))), 0)
         
         return K
     
@@ -234,19 +244,16 @@ if __name__ == '__main__':
     X, y = make_regression(n_samples=200)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     
-    lgb_regressor = XGBRegressor()
-    lgb_regressor.fit(X_train, y_train)
-    
-    gbm = GradientBoostingRegressor()
-    gbm.fit(X_train, y_train)
-    
+    lgb_regressor = LGBMRegressor().fit(X_train, y_train)
+    gbm = GradientBoostingRegressor().fit(X_train, y_train)
     cb_regressor = CatBoostRegressor().fit(X_train, y_train)
+    xgb_regressor = XGBRegressor().fit(X_train, y_train)
     
-    axil = AXIL(lgb_regressor)
-    axil.fit(X_train, y_train)
+    axil = AXIL(gbm)
+    axil.fit(X_train)
      
     k_test = axil.transform(X_test)
-    y_pred = lgb_regressor.predict(X_test)
+    y_pred = gbm.predict(X_test)
     
     k_test.T @ y_train
     
