@@ -20,7 +20,7 @@ except:
 from .trees_extraction import sklearn_trees_to_dataframe, \
     xgboost_trees_to_dataframe, lightgbm_trees_to_dataframe, \
     catboost_trees_to_dataframe
-from .utils import check_estimator, is_catboost
+from .utils import check_estimator, is_catboost, is_lightgbm, is_sklearn_gbm, is_xgboost
 
 # read: https://arxiv.org/pdf/2101.07077.pdf
 name_map: Final = {
@@ -126,6 +126,28 @@ trees_to_dataframe_fun = {
 }
 
 
+# =============================================================================
+#                             LAMBDA
+# =============================================================================
+
+   
+
+def xgboost_reg_lambda(obj):
+    if obj.reg_lambda is not None:
+        return obj.learning_rate is not None
+    else:
+        config = json.loads(obj.get_booster().save_config())
+        # Duplicates: eta and learning_rate
+        eta = config['learner']['gradient_booster']['updater']['grow_colmaker']['train_param']['reg_lambda']
+        return float(eta)
+
+def lightgbm_learning_rate(obj):
+    return obj.learning_rate
+
+def catboost_learning_rate(obj):
+    return obj.learning_rate_
+
+
 class GBMWrapper:
     """A general wrapper object for all the acceptable models"""
     
@@ -165,6 +187,19 @@ class GBMWrapper:
             return self.estimator.n_estimators
         else:
             return self.estimator.get_all_params()['iterations']
+        
+    @property
+    def reg_lambda(self):
+        # TODO: refactor!
+        if is_sklearn_gbm(self.estimator):
+            return 0
+        elif is_xgboost(self.estimator):
+            return xgboost_reg_lambda(self.estimator)
+        elif is_catboost(self.estimator):
+            return self.estimator.get_all_params()['l2_leaf_reg']
+        elif is_lightgbm(self.estimator):
+            return self.estimator.reg_lambda
+            
             
         
 

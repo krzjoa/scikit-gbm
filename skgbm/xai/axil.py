@@ -72,7 +72,8 @@ def lcm(vector1, vector2):
 
     return L
 
-class AXIL(BaseEstimator, TransformerMixin):
+# Inherit GBMWrapper (GBM)
+class AXIL(BaseEstimator, TransformerMixin, GBMWrapper):
     """
     Additive eXplanations with Instance Loadings - instance importance for regression.
     
@@ -82,6 +83,11 @@ class AXIL(BaseEstimator, TransformerMixin):
     ... Any GBM regression prediction is a linear combination of training data targets y.
     
     This implementations takes into account the regularization. 
+    
+    Make a table out of it:
+    * scikit- learn: GradientBoostingRegressor has no lambda parameter
+    * catboost: lambda is applied to leaves, but not to initial guess
+    * xgboost: lambda is applied to both leaves and 
     
     Parameters
     ----------
@@ -111,12 +117,8 @@ class AXIL(BaseEstimator, TransformerMixin):
         check_is_gbm_regressor(estimator)
         check_is_fitted(estimator)
         check_is_supported_by_axil(estimator)
-        self.wrapped_ = GBMWrapper(estimator)
-        super().__init__()
+        super().__init__(estimator)
     
-    @property
-    def estimator(self):
-        return self.wrapped_.estimator
     
     def fit(self, X, y=None, **kwargs):
         """
@@ -131,8 +133,8 @@ class AXIL(BaseEstimator, TransformerMixin):
         
         # number of observations
         N = len(X)
-        num_trees = self.wrapped_.n_estimators # n_estimators?
-        learning_rate = self.wrapped_.learning_rate
+        num_trees = self.n_estimators # n_estimators?
+        learning_rate = self.learning_rate
         
         # useful matrices
         ones = np.ones((N,N))
@@ -150,7 +152,18 @@ class AXIL(BaseEstimator, TransformerMixin):
         
         # It makes sense anyway, becuase we don't use the predictions here
         # We only take into account the leaf the particular instance falls in
+        # Does regularized XGBoost regularizes also mean?
+        # if is_xgboost(self.estimator) or is_lightgbm(self.estimator):
+        #     P_0 = ones / (N + self.reg_lambda)
+        # else:
+        #     P_0 = ones / (N + self.reg_lambda)
+        
+        # I have to analyze the code!!!
+        # maybe mean is calculated as: sum(y_train) + 1 / (N + 1) ???
+        # Maybe we have to inlude y to computations
+        
         P_0 = ones / N
+            
         self.P_list.append(P_0)
         G_accum = P_0 # idea of residuals
         
@@ -171,7 +184,7 @@ class AXIL(BaseEstimator, TransformerMixin):
             # * CatBoost: 3
             # * XGBoost: 1
             
-            W = D / D.sum(axis=1) # originally: W = D / (ones @ D)
+            W = D / (D.sum(axis=1) + self.reg_lambda) # originally: W = D / (ones @ D)
             #W = D / (ones @ D)
             # Resid coef is a coefficient, that allows us transition from 
             # original targets to residuals at n-th iteration
@@ -205,13 +218,11 @@ class AXIL(BaseEstimator, TransformerMixin):
         # number of instances in this data
         S = len(X)
         
-        #pdb.set_trace()
-        
         # model instance membership of tree leaves 
         lm_test = self._instance_leaf_membership(X, S)
         
         # number of trees in model
-        num_trees = self.wrapped_.n_estimators
+        num_trees = self.n_estimators
         
         # ones matrix with same dimensions as P
         ones_P = np.ones((N, N))
@@ -234,7 +245,7 @@ class AXIL(BaseEstimator, TransformerMixin):
     
     def _instance_leaf_membership(self, X, N):
         """Creates matrix (n_trees, n_instances)"""
-        instance_leaf_membership = self.wrapped_.apply(X)
+        instance_leaf_membership = self.apply(X)
         # Zeroes instead of ones
         return np.concatenate((
             np.ones((1, N)), # First prediction: "one leaf" 
@@ -259,10 +270,10 @@ if __name__ == '__main__':
     X, y = make_regression(n_samples=200)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     
-    #gbm = LGBMRegressor().fit(X_train, y_train)
+    gbm = LGBMRegressor(reg_lambda=1).fit(X_train, y_train)
     #gbm = GradientBoostingRegressor().fit(X_train, y_train)
-    gbm = CatBoostRegressor(reg_lambda=0).fit(X_train, y_train)
-    #gbm = XGBRegressor(reg_lambda=0).fit(X_train, y_train)
+    #gbm = CatBoostRegressor(reg_lambda=3).fit(X_train, y_train)
+    gbm = XGBRegressor(reg_lambda=0).fit(X_train, y_train)
     
     # https://stats.stackexchange.com/questions/372634/boosting-and-bagging-trees-xgboost-lightgbm
     # https://stackoverflow.com/questions/48011742/xgboost-leaf-scores
