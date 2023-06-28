@@ -39,3 +39,5 @@ def test_axil(make_regression):
         assert np.isclose(y_pred, k_test.T @ y_train, rtol=rtol).all()
     
  
+# def test_axil_lambda - different values of the lambda parameter
+# def test_axil_bagging - it won't work, so it'should raise a error or warning(?)

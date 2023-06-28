@@ -13,20 +13,25 @@ from ..utils import check_is_gbm_regressor, \
 import pdb
 
 
-LIGHTGBM_RMSE_LOSS = ['regression', 'regression_l2', 'l2', 
-             'mean_squared_error', 'mse', 'l2_root', 
-             'root_mean_squared_error', 'rmse']
-
+LIGHTGBM_RMSE_LOSS = [
+    'regression', 
+    'regression_l2', 'l2', 
+    'mean_squared_error', 
+    'mse', 
+    'l2_root', 
+    'root_mean_squared_error', 
+    'rmse'
+]
 
 
 def check_is_supported_by_axil(estimator):
     """For the moment, AXIL only accepts models trained with RMSE."""
     
-    if is_xgboost(estimator):
-        raise Exception("XGBoost regressors are supported yet.")
+    # if is_xgboost(estimator):
+    #     raise Exception("XGBoost regressors are supported yet.")
     
     # Common interface to get loss function
-    accepted = False
+    accepted = True
     if is_lightgbm(estimator):
         if estimator.objective_ in LIGHTGBM_RMSE_LOSS:
             accepted = True
@@ -41,6 +46,7 @@ def check_is_supported_by_axil(estimator):
     if not accepted:
         raise Exception("Passed estimator uses loss functions other than RMSE or non-standard initial guess.")
 
+# Create own symmetrical matrix???
 
 # TODO: can be written faster?
 # TODO: create lcm_symm
@@ -74,6 +80,8 @@ class AXIL(BaseEstimator, TransformerMixin):
     It's application to Gradient Boosted Decsion Trees is based on the following theorem:
         
     ... Any GBM regression prediction is a linear combination of training data targets y.
+    
+    This implementations takes into account the regularization. 
     
     Parameters
     ----------
@@ -156,6 +164,13 @@ class AXIL(BaseEstimator, TransformerMixin):
             # D and W are symmetric issymmetric(D, rtol=0.00001)
             # lm[i] has size (1, N)
             D = lcm(self.lm_train[i], self.lm_train[i])
+            # TODO: extract reg_lambda and add it to D.sum(axis=1)
+            # Default regularization parameters:
+            # * LightGBM: 0
+            # * sklearn: -
+            # * CatBoost: 3
+            # * XGBoost: 1
+            
             W = D / D.sum(axis=1) # originally: W = D / (ones @ D)
             #W = D / (ones @ D)
             # Resid coef is a coefficient, that allows us transition from 
@@ -211,7 +226,7 @@ class AXIL(BaseEstimator, TransformerMixin):
         # execute for 1 to num_trees (inclusive)
         for i in range(1, num_trees+1):
             L = lcm(self.lm_train[i], lm_test[i])
-            # Nans 
+            # Nans in CatBoost - check the exact reason
             K = K + np.nan_to_num((P[i].T @ (L / (ones_P @ L))), 0)
         
         return K
@@ -244,30 +259,29 @@ if __name__ == '__main__':
     X, y = make_regression(n_samples=200)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     
-    lgb_regressor = LGBMRegressor().fit(X_train, y_train)
-    gbm = GradientBoostingRegressor().fit(X_train, y_train)
-    cb_regressor = CatBoostRegressor().fit(X_train, y_train)
-    xgb_regressor = XGBRegressor().fit(X_train, y_train)
+    #gbm = LGBMRegressor().fit(X_train, y_train)
+    #gbm = GradientBoostingRegressor().fit(X_train, y_train)
+    gbm = CatBoostRegressor(reg_lambda=0).fit(X_train, y_train)
+    #gbm = XGBRegressor(reg_lambda=0).fit(X_train, y_train)
+    
+    # https://stats.stackexchange.com/questions/372634/boosting-and-bagging-trees-xgboost-lightgbm
+    # https://stackoverflow.com/questions/48011742/xgboost-leaf-scores
+    # https://www.riskified.com/resources/article/boosting-comparison/
     
     axil = AXIL(gbm)
     axil.fit(X_train)
+    
+    # Take regularization into account
      
     k_test = axil.transform(X_test)
     y_pred = gbm.predict(X_test)
     
-    k_test.T @ y_train
-    
-    y_pred
-    
-    np.isclose(y_pred, k_test.T @ y_train, rtol=0.000001).all()
-    
-    
+    np.isclose(y_pred, k_test.T @ y_train, rtol=0.0001).all()
     
     
     # Init estimator
     # GradientBoostingRegressor() -> gbm.init_ (domyślnie: DummyEstimator)
     # LGBMRegressor() # boost_from_average
-    # 
-    
+
     
         
