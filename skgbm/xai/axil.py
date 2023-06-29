@@ -119,7 +119,6 @@ class AXIL(BaseEstimator, TransformerMixin, GBM):
     """    
     
     def __init__(self, estimator: object):
-        # TODO: expose estimator for better printing
         check_is_gbm_regressor(estimator)
         check_is_fitted(estimator)
         check_is_supported_by_axil(estimator)
