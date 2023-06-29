@@ -6,11 +6,9 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from numba import jit
 
-from ..base import GBMWrapper
+from ..base import GBM
 from ..utils import check_is_gbm_regressor, \
-    is_lightgbm, is_catboost, is_xgboost, is_sklearn_gbm
-
-import pdb
+    is_lightgbm, is_catboost, is_sklearn_gbm
 
 
 LIGHTGBM_RMSE_LOSS = [
@@ -45,6 +43,18 @@ def check_is_supported_by_axil(estimator):
     
     if not accepted:
         raise Exception("Passed estimator uses loss functions other than RMSE or non-standard initial guess.")
+        
+        
+def check_uses_lambda_reg(wrapped_estimator):
+    if wrapped_estimator.reg_lambda > 0:
+        raise Exception("For the moment, the AXIL explainer only handles cases with regularization parameter lambda = 0.")
+        
+        
+def check_uses_bagging(wrapped_estimator):
+    if wrapped_estimator.sample < 1:
+        raise Exception("For the moment, the AXIL explainer doens't handle models with bagging turned on.")
+    
+
 
 # Create own symmetrical matrix???
 
@@ -73,7 +83,7 @@ def lcm(vector1, vector2):
     return L
 
 # Inherit GBMWrapper (GBM)
-class AXIL(BaseEstimator, TransformerMixin, GBMWrapper):
+class AXIL(BaseEstimator, TransformerMixin, GBM):
     """
     Additive eXplanations with Instance Loadings - instance importance for regression.
     
@@ -82,7 +92,8 @@ class AXIL(BaseEstimator, TransformerMixin, GBMWrapper):
         
     ... Any GBM regression prediction is a linear combination of training data targets y.
     
-    This implementations takes into account the regularization. 
+    For the moment, it only accepts the models with reg_lambda = 0 and sample = 1 (no bagging).
+    
     
     Parameters
     ----------
@@ -108,11 +119,14 @@ class AXIL(BaseEstimator, TransformerMixin, GBMWrapper):
     """    
     
     def __init__(self, estimator: object):
-        # TODO: we don't have to store the data?
         check_is_gbm_regressor(estimator)
         check_is_fitted(estimator)
         check_is_supported_by_axil(estimator)
         super().__init__(estimator)
+        
+        # Checks on wrapped_estimator
+        check_uses_lambda_reg(self.estimator)
+        check_uses_bagging(self.estimator)
     
     
     def fit(self, X, y=None, **kwargs):
@@ -122,9 +136,13 @@ class AXIL(BaseEstimator, TransformerMixin, GBMWrapper):
         X:
         
         """
-        # TODO: is the first estimator always mean? (for any loss function?)
         # check with e.g. quantile loss
         # https://github.com/pgeertsema/AXIL_paper/blob/main/axil.py
+        
+        # Make a table out of it:
+        # * scikit- learn: GradientBoostingRegressor has no lambda parameter
+        # * catboost: lambda is applied to leaves, but not to initial guess
+        # * xgboost: lambda is applied to both leaves and 
         
         # number of observations
         N = len(X)
@@ -143,15 +161,14 @@ class AXIL(BaseEstimator, TransformerMixin, GBMWrapper):
         
         # iterations 0 model predictions (simply average of training data)
         # corresponds to "tree 0"
-        # Check if loss is l2
+        P_0 = ones / N
+        # P_0 = ones / (N + self.reg_lambda)
+        # P_0 = np.zeros((N,N)) #<- this one is totally wrong
         
-        # It makes sense anyway, becuase we don't use the predictions here
-        # We only take into account the leaf the particular instance falls in
-        # Does regularized XGBoost regularizes also mean?
-        if is_xgboost(self.estimator) or is_lightgbm(self.estimator):
-            P_0 = ones / (N + self.reg_lambda)
-        else:
-            P_0 = ones / (N + self.reg_lambda)
+        # if is_xgboost(self.estimator) or is_lightgbm(self.estimator):
+        #     P_0 = ones / (N + self.reg_lambda)
+        # else:
+        #     P_0 = ones / N
             
         self.P_list.append(P_0)
         G_accum = P_0 # idea of residuals
@@ -166,28 +183,21 @@ class AXIL(BaseEstimator, TransformerMixin, GBMWrapper):
             # D and W are symmetric issymmetric(D, rtol=0.00001)
             # lm[i] has size (1, N)
             D = lcm(self.lm_train[i], self.lm_train[i])
-            # TODO: extract reg_lambda and add it to D.sum(axis=1)
+            
             # Default regularization parameters:
             # * LightGBM: 0
             # * sklearn: -
             # * CatBoost: 3
             # * XGBoost: 1
+            # W = D / (D.sum(axis=1) + self.reg_lambda) 
             
-            W = D / (D.sum(axis=1) + self.reg_lambda) # originally: W = D / (ones @ D)
-            #W = D / (ones @ D)
+            W = D / D.sum(axis=1) # originally: W = D / (ones @ D)
+      
             # Resid coef is a coefficient, that allows us transition from 
             # original targets to residuals at n-th iteration
             resid_coef = I-G_accum
             P = learning_rate * (W @ resid_coef)
             self. P_list.append(P)
-        
-            # Use scparse matrix instead
-            # So w_i is the is a raio we have to multiply the target i by to get 
-            # the final prediction of the given leaf
-            
-            # np.diag(w_).sum() adds up to the number of leaves
-            # It means: we still have to cover 0.995 of the prediction 
-            # Or: np.diag((I-G_prev))
             
             # Accumulate weights
             G_accum += P
@@ -260,9 +270,9 @@ if __name__ == '__main__':
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     
     gbm = LGBMRegressor(reg_lambda=1).fit(X_train, y_train)
-    #gbm = GradientBoostingRegressor().fit(X_train, y_train)
-    #gbm = CatBoostRegressor(reg_lambda=3).fit(X_train, y_train)
-    #gbm = XGBRegressor(reg_lambda=1).fit(X_train, y_train)
+    gbm = GradientBoostingRegressor().fit(X_train, y_train)
+    gbm = CatBoostRegressor(reg_lambda=0, subsample=1).fit(X_train, y_train)
+    gbm = XGBRegressor(reg_lambda=1).fit(X_train, y_train)
     
     # https://stats.stackexchange.com/questions/372634/boosting-and-bagging-trees-xgboost-lightgbm
     # https://stackoverflow.com/questions/48011742/xgboost-leaf-scores
@@ -272,16 +282,19 @@ if __name__ == '__main__':
     axil.fit(X_train)
     
     # Take regularization into account
+    
+    # LightGBM: https://github.com/microsoft/LightGBM/blob/9edea60edc5db7785508d0f5981890ac1e1b430a/src/treelearner/feature_histogram.hpp#L991
+    # 
      
     k_test = axil.transform(X_test)
     y_pred = gbm.predict(X_test)
     
+    print(y_pred)
+    print(k_test.T @ y_train)
+    
     np.isclose(y_pred, k_test.T @ y_train, rtol=0.0001).all()
     
-    
-    # Init estimator
-    # GradientBoostingRegressor() -> gbm.init_ (domyślnie: DummyEstimator)
-    # LGBMRegressor() # boost_from_average
+    # Waht is bayesian_matrix_reg in catboost?
 
     
         

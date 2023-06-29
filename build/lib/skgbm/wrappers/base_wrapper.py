@@ -4,8 +4,10 @@ from abc import ABC, abstractmethod
 
 
 class _GBMWrapper(ABC):
+    # TODO: static methods?
     
-    # TODO: decide
+    def __init__(self, estimator):
+        self.estimator = estimator
     
     @abstractmethod
     def apply(self, X):
@@ -23,4 +25,7 @@ class _GBMWrapper(ABC):
     def n_estimators(self):
         pass
     
+    @abstractmethod
+    def subsample(self):
+        pass
     

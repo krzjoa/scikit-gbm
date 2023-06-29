@@ -10,7 +10,7 @@ from sklearn.base import clone
 
 from feature_engine.discretisation import ArbitraryDiscretiser
 
-from ..base import GBMWrapper
+from ..base import GBM
 from ..tools import trees_to_dataframe
 from ..trees_extraction import _catboost_raw_trees, _catboost_get_splits
 
@@ -27,7 +27,7 @@ except:
 
 
 
-class GBMDiscretizer(BaseEstimator, TransformerMixin, GBMWrapper):
+class GBMDiscretizer(BaseEstimator, TransformerMixin, GBM):
     """
     Feature discretizer based on GBDT.
     
