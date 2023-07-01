@@ -15,7 +15,7 @@ from xgboost import XGBClassifier, XGBRegressor, XGBRanker
 from lightgbm import LGBMClassifier, LGBMRegressor, LGBMRanker
 from catboost import CatBoostClassifier, CatBoostRegressor, CatBoostRanker
 
-from skgbm.functional import trees_to_dataframe
+from skgbm.tools import trees_to_dataframe
 
 make_classification = pytest.fixture(make_classification)
 make_regression = pytest.fixture(make_regression)

@@ -22,6 +22,7 @@ Fo the moment, you can find the following tools in the library:
 * `GBMFeaturizer`
 * `GBMDiscretizer`
 * `trees_to_dataframe`
+* `AXIL`
 
 Take a look at the [documentation](https://scikit-gbm.readthedocs.io/en/latest/?badge=latest) to learn more.
 A simple example, how to use `GBMFeaturizer` in a classification task.
