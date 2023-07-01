@@ -36,7 +36,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
 
 from skgbm.preprocessing import GBMFeaturizer
-from lightgbm import LGBMRegressor
 from xgboost import XGBClassifier
 
 X, y = make_classification()
