@@ -10,6 +10,7 @@ from ..base import GBM
 from ..utils import check_is_gbm_regressor, \
     is_lightgbm, is_catboost, is_sklearn_gbm
 
+import pdb
 
 LIGHTGBM_RMSE_LOSS = [
     'regression', 
@@ -51,7 +52,7 @@ def check_uses_lambda_reg(wrapped_estimator):
         
         
 def check_uses_bagging(wrapped_estimator):
-    if wrapped_estimator.sample < 1:
+    if wrapped_estimator.subsample < 1:
         raise Exception("For the moment, the AXIL explainer doens't handle models with bagging turned on.")
     
 
@@ -125,17 +126,12 @@ class AXIL(BaseEstimator, TransformerMixin, GBM):
         super().__init__(estimator)
         
         # Checks on wrapped_estimator
-        check_uses_lambda_reg(self.estimator)
-        check_uses_bagging(self.estimator)
+        check_uses_lambda_reg(self)
+        check_uses_bagging(self)
     
     
     def fit(self, X, y=None, **kwargs):
-        """
-        Parameters
-        ----------
-        X:
-        
-        """
+
         # check with e.g. quantile loss
         # https://github.com/pgeertsema/AXIL_paper/blob/main/axil.py
         
@@ -257,11 +253,10 @@ class AXIL(BaseEstimator, TransformerMixin, GBM):
 if __name__ == '__main__':
     from sklearn.datasets import make_regression
     from sklearn.model_selection import train_test_split
-    from lightgbm import LGBMRegressor 
-    from catboost import CatBoostRegressor
+    # from lightgbm import LGBMRegressor 
+    # from catboost import CatBoostRegressor
+    # from sklearn.ensemble import GradientBoostingRegressor
     from xgboost import XGBRegressor
-    
-    from sklearn.ensemble import GradientBoostingRegressor
     
     from skgbm.xai import AXIL
     import numpy as np
@@ -269,10 +264,10 @@ if __name__ == '__main__':
     X, y = make_regression(n_samples=200)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     
-    gbm = LGBMRegressor(reg_lambda=1).fit(X_train, y_train)
-    gbm = GradientBoostingRegressor().fit(X_train, y_train)
-    gbm = CatBoostRegressor(reg_lambda=0, subsample=1).fit(X_train, y_train)
-    gbm = XGBRegressor(reg_lambda=1).fit(X_train, y_train)
+    # gbm = LGBMRegressor(reg_lambda=0, subsample=1.).fit(X_train, y_train)
+    # gbm = GradientBoostingRegressor().fit(X_train, y_train)
+    # gbm = CatBoostRegressor(reg_lambda=0, subsample=1).fit(X_train, y_train)
+    gbm = XGBRegressor(reg_lambda=0).fit(X_train, y_train)
     
     # https://stats.stackexchange.com/questions/372634/boosting-and-bagging-trees-xgboost-lightgbm
     # https://stackoverflow.com/questions/48011742/xgboost-leaf-scores

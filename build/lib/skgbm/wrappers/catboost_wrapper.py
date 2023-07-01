@@ -25,7 +25,7 @@ class _CatboostWrapper(_GBMWrapper):
     def reg_lambda(self):
         return self.params['l2_leaf_reg']
     
-    def sumbsample(self):
+    def subsample(self):
         return self.params['subsample']
     
     

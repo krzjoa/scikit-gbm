@@ -24,12 +24,12 @@ class _XgboostWrapper(_GBMWrapper):
         return xgboost_trees_to_dataframe(self)
     
     def learning_rate(self):
-        return self.estimator.learning_rate
-    
-    def n_estimators(self):
         eta = self.config['learner']['gradient_booster']['updater'] \
             ['grow_colmaker']['train_param']['eta']
         return float(eta)
+    
+    def n_estimators(self):
+        return self.estimator.n_estimators
     
     def reg_lambda(self):
         reg_lambda = self.config['learner']['gradient_booster']['updater'] \

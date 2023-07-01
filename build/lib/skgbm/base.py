@@ -19,7 +19,8 @@ class GBM:
     def __init__(self, estimator):
         check_estimator(estimator)
         # TODO: try to simplify it
-        self.estimator = wrap_estimator(estimator)
+        self.estimator = estimator
+        self.wrapped_estimator_ = wrap_estimator(self.estimator)
         
         # Maybe inject somehow inheriting class??
         # Idea:
@@ -30,26 +31,30 @@ class GBM:
         # _GBMInternal -> _XGBoostWrapper
         
     def fit(self, X, y, **kwargs):
-        self.estimator.fit(X, y, **kwargs)
+        self.wrapped_estimator_.fit(X, y, **kwargs)
         return self
     
     def apply(self, X):
-        return self.estimator.apply( X)
+        return self.wrapped_estimator_.apply( X)
     
     def trees_to_dataframe(self):
-        return self.estimator.trees_to_dataframe()
+        return self.wrapped_estimator_.trees_to_dataframe()
     
     @property
     def learning_rate(self):
-        return self.estimator.learning_rate()
+        return self.wrapped_estimator_.learning_rate()
     
     @property
     def n_estimators(self):
-        return self.estimator.n_estimators()
+        return self.wrapped_estimator_.n_estimators()
         
     @property
     def reg_lambda(self):
-        return self.estimator.reg_lambda()
+        return self.wrapped_estimator_.reg_lambda()
+    
+    @property
+    def subsample(self):
+        return self.wrapped_estimator_.subsample()
             
             
         

@@ -23,4 +23,6 @@ class _SklearnWrapper(_GBMWrapper):
     def reg_lambda(self):
         return 0
     
+    def subsample(self):
+        return self.estimator.subsample
     
