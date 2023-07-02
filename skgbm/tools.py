@@ -3,7 +3,7 @@
 
 import pandas as pd
 
-from .base import GBMWrapper
+from .base import GBM
 
 def trees_to_dataframe(obj) -> pd.DataFrame:
     """
@@ -66,4 +66,4 @@ def trees_to_dataframe(obj) -> pd.DataFrame:
     >>> gb_reg = GradientBoostingRegressor().fit(X, y)
     >>> gb_df = trees_to_dataframe(gb_reg)
     """
-    return GBMWrapper(obj).trees_to_dataframe()
+    return GBM(obj).trees_to_dataframe()
