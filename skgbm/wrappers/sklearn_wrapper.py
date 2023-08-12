@@ -26,3 +26,6 @@ class _SklearnWrapper(_GBMWrapper):
     def subsample(self):
         return self.estimator.subsample
     
+    def _on_fit(self):
+        pass
+    
