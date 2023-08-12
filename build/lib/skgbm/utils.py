@@ -2,6 +2,8 @@
 
 # TODO: check if object is raw booster
 
+from sklearn.utils.validation import check_is_fitted
+
 # =============================================================================
 #                                  XGBOOST
 # =============================================================================
@@ -101,3 +103,10 @@ def check_is_gbm_regressor(estimator):
     str_type = type(estimator).__name__ 
     assert str_type in ALL_REGRESSORS, \
         f'Passed object {str_type} is not a GBM regressor'
+
+def is_fitted(estimator):
+    try:
+        check_is_fitted(estimator)
+        return True
+    except:
+        return False

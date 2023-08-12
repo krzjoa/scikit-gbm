@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 
+
 from .base_wrapper import _GBMWrapper
 from ..trees_extraction import catboost_trees_to_dataframe
-
+from ..utils import is_fitted
 
 class _CatboostWrapper(_GBMWrapper):
     
     def __init__(self, estimator):
         super().__init__(estimator)
-        self.params = self.estimator.get_all_params()
+        
+        if is_fitted(estimator):
+            self.params = self.estimator.get_all_params()
     
     def apply(self, X):
         return self.estimator.calc_leaf_indexes(X)
@@ -27,6 +30,10 @@ class _CatboostWrapper(_GBMWrapper):
     
     def subsample(self):
         return self.params['subsample']
+    
+    def _on_fit(self):
+        pass
+        
     
     
     

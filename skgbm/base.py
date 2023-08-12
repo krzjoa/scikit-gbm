@@ -31,7 +31,8 @@ class GBM:
         # _GBMInternal -> _XGBoostWrapper
         
     def fit(self, X, y, **kwargs):
-        self.wrapped_estimator_.fit(X, y, **kwargs)
+        self.wrapped_estimator_.estimator.fit(X, y, **kwargs)
+        self.wrapped_estimator_._on_fit()
         return self
     
     def apply(self, X):

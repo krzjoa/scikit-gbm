@@ -4,6 +4,7 @@ import json
 
 from .base_wrapper import _GBMWrapper
 from ..trees_extraction import xgboost_trees_to_dataframe
+from ..utils import is_fitted
 
 try:
     import xgboost as xgb
@@ -15,7 +16,8 @@ class _XgboostWrapper(_GBMWrapper):
     
     def __init__(self, estimator):
         super().__init__(estimator)
-        self.config = json.loads(self.estimator.get_booster().save_config())
+        if is_fitted(estimator):
+            self.config = json.loads(self.estimator.get_booster().save_config())
     
     def apply(self, X):
         return self.estimator._Booster.predict(xgb.DMatrix(X), pred_leaf=True)
@@ -40,6 +42,9 @@ class _XgboostWrapper(_GBMWrapper):
         subsample = self.config['learner']['gradient_booster']['updater'] \
             ['grow_colmaker']['train_param']['subsample']
         return float(subsample)
+    
+    def _on_fit(self):
+        self.config = json.loads(self.estimator.get_booster().save_config())
         
     
     

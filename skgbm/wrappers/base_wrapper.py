@@ -29,3 +29,6 @@ class _GBMWrapper(ABC):
     def subsample(self):
         pass
     
+    @abstractmethod
+    def _on_fit(self):
+        pass
